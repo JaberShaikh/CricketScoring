@@ -64,7 +64,7 @@
 </head>
 <body>
 
-  <form:form name="cricket_form" autocomplete="off" enctype="multipart/form-data">
+  <form:form name="cricket_form" autocomplete="off" > <!-- enctype="multipart/form-data"> -->
 	<div class="content py-2" style="background-color: #EAE8FF; color: #2E008B">
 	  <div class="container">
 		 <div class="col-12">

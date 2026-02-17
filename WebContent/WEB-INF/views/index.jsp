@@ -44,8 +44,7 @@
               </div>
             </div>
 
-            <div class="panel panel-default" id="wagon-panel"
-     style="margin-top:5px;display:none;">
+            <div class="panel panel-default" id="wagon-panel" style="margin-top:5px;display:none;">
 			    <div class="panel-heading" role="tab" id="wagon_heading" style="border-style:solid;border-width:medium;border-radius:25px;">
 			      <h5 class="panel-title" style="position:relative;left:10px;">
 			        <a class="collapsed" data-toggle="collapse" data-parent="#match_wagon_shots_menu" href="#wagon_sub_menu" aria-expanded="false" 
@@ -75,6 +74,5 @@
 			  </div>
 			</div>
 		</div>
-	</div>
 </body>
 </html>

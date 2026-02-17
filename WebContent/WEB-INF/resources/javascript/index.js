@@ -746,7 +746,7 @@ function initialiseForm(whatToProcess, dataToProcess)
 }
 function uploadFormDataToSessionObjects(whatToProcess)
 {
-	var formData = new FormData();
+	var formData = {};
 	var url_path;
 	
 	switch(whatToProcess.toUpperCase()) {
@@ -764,8 +764,31 @@ function uploadFormDataToSessionObjects(whatToProcess)
 		break;
 	}
 	
-	switch(whatToProcess.toUpperCase()) {
+	switch (whatToProcess.toUpperCase()) {
+    case 'UPLOAD_WAGON_DATA':
+		formData.wagonData =
+		    ($('#wagonData').val() || '') + ',' +
+		    ($('#selectBoundaryHeight').val() || '') + ',' +
+		    ($('#log_six_distance').val() || '');
+        break;
+    case 'UPLOAD_SHOT_DATA':
+        formData.shotData =
+            $('input.aerial_ground_single_check_only:checked').attr('id') || '';
+        break;
+    default:
+        $('input:not([type="file"]), select, textarea').each(function () {
+            if (!this.id) return;
+            formData[this.id] = $(this).val() || '';
+        });
+        break;
+	}
+	
+/*	switch(whatToProcess.toUpperCase()) {
 	case 'UPLOAD_WAGON_DATA':
+		formData['wagonData'] =
+		    $('#wagonData').val() + ',' +
+		    $('#selectBoundaryHeight option:selected').val() + ',' +
+		    $('#log_six_distance').val();
 		formData.append('wagonData',$('#wagonData').val() + ',' + $('#selectBoundaryHeight option:selected').val() 
 			+ ',' + $('#log_six_distance').val());  
 		break;
@@ -775,6 +798,11 @@ function uploadFormDataToSessionObjects(whatToProcess)
 	default:
 		$('input, select, textarea').each(
 			function(index){  
+				if ($(this).is("select")) {
+				    formData[$(this).attr('id')] = $('#' + $(this).attr('id') + ' option:selected').val();
+				} else {
+				    formData[$(this).attr('id')] = $(this).val();
+				}
 				if($(this).is("select")) {
 					formData.append($(this).attr('id'),$('#' + $(this).attr('id') + ' option:selected').val());  
 				} else {
@@ -783,15 +811,15 @@ function uploadFormDataToSessionObjects(whatToProcess)
 			}
 		);
 		break;
-	}
+	}*/
 
 	$.ajax({    
 		headers: {'X-CSRF-TOKEN': $('meta[name="_csrf"]').attr('content')},
         url : url_path,     
         data : formData,
         cache: false,
-        contentType: false,
-        processData: false,
+        //contentType: false,
+        //processData: false,
         type: 'POST',     
         success : function(data) {
 
@@ -966,18 +994,22 @@ function processUserSelection(whichInput, extraData)
 						option.text = hp.full_name;
 						select.appendChild(option);
 					});
-					match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.full_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
-						option = document.createElement('option');
-						option.value = hos.playerId;
-					    option.text = hos.full_name;
-					    select.appendChild(option);
-					});
+					if(match_data.setup.homeSubstitutes != null) {
+						match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = hs.playerId;
+						    option.text = hs.full_name;
+						    select.appendChild(option);
+						});
+					}
+					if(match_data.setup.homeOtherSquad != null) {
+						match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
+							option = document.createElement('option');
+							option.value = hos.playerId;
+						    option.text = hos.full_name;
+						    select.appendChild(option);
+						});
+					}
 				}else if(match_data.setup.awayTeamId == $('#select_impact_team option:selected').val()) {
 					match_data.setup.awaySquad.forEach(function(ap,index,arr){
 						option = document.createElement('option');
@@ -985,18 +1017,22 @@ function processUserSelection(whichInput, extraData)
 						option.text = ap.full_name;
 						select.appendChild(option);
 					});
-					match_data.setup.awaySubstitutes.forEach(function(ap,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = ap.playerId;
-					    option.text = ap.full_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
-						option = document.createElement('option');
-						option.value = aos.playerId;
-					    option.text = aos.full_name;
-					    select.appendChild(option);
-					});
+					if(match_data.setup.awaySubstitutes != null) {
+						match_data.setup.awaySubstitutes.forEach(function(ap,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = ap.playerId;
+						    option.text = ap.full_name;
+						    select.appendChild(option);
+						});
+					}
+					if(match_data.setup.awayOtherSquad != null) {
+						match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
+							option = document.createElement('option');
+							option.value = aos.playerId;
+						    option.text = aos.full_name;
+						    select.appendChild(option);
+						});
+					}
 				}
 				removeDuplicateOptions('select_impact_outgoing_player');
 /*				inn.battingCard.forEach(function(bc,index,arr){
@@ -1017,18 +1053,22 @@ function processUserSelection(whichInput, extraData)
 				option.text = hp.full_name;
 				select.appendChild(option);
 			});
-			match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-				option = document.createElement('option');
-				option.value = hs.playerId;
-			    option.text = hs.full_name;
-			    select.appendChild(option);
-			});
-			match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
-				option = document.createElement('option');
-				option.value = hos.playerId;
-			    option.text = hos.full_name;
-			    select.appendChild(option);
-			});
+			if(match_data.setup.homeSubstitutes != null) {
+				match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
+					option = document.createElement('option');
+					option.value = hs.playerId;
+				    option.text = hs.full_name;
+				    select.appendChild(option);
+				});
+			}
+			if(match_data.setup.homeOtherSquad != null) {
+				match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
+					option = document.createElement('option');
+					option.value = hos.playerId;
+				    option.text = hos.full_name;
+				    select.appendChild(option);
+				});
+			}
 		}else if(match_data.setup.awayTeamId == $('#select_impact_team option:selected').val()) {
 			match_data.setup.awaySquad.forEach(function(ap,index,arr){
 				option = document.createElement('option');
@@ -1036,18 +1076,22 @@ function processUserSelection(whichInput, extraData)
 				option.text = ap.full_name;
 				select.appendChild(option);
 			});
-			match_data.setup.awaySubstitutes.forEach(function(ap,bc_index,bc_arr){
-				option = document.createElement('option');
-				option.value = ap.playerId;
-			    option.text = ap.full_name;
-			    select.appendChild(option);
-			});
-			match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
-				option = document.createElement('option');
-				option.value = aos.playerId;
-			    option.text = aos.full_name;
-			    select.appendChild(option);
-			});
+			if(match_data.setup.awaySubstitutes != null) {
+				match_data.setup.awaySubstitutes.forEach(function(ap,bc_index,bc_arr){
+					option = document.createElement('option');
+					option.value = ap.playerId;
+				    option.text = ap.full_name;
+				    select.appendChild(option);
+				});
+			}
+			if(match_data.setup.awayOtherSquad != null) {
+				match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
+					option = document.createElement('option');
+					option.value = aos.playerId;
+				    option.text = aos.full_name;
+				    select.appendChild(option);
+				});
+			}
 		}
 		removeDuplicateOptions('select_impact_incoming_player');
 		break;
@@ -1067,12 +1111,14 @@ function processUserSelection(whichInput, extraData)
 		spellNo = 0;
 		match_data.match.inning.forEach(function(inn,index,arr) {
 			if(inn.isCurrentInning.toLowerCase() == 'yes') {
-				inn.spells.forEach(function(spell,spell_index,spell_arr){
-					if(spell.playerId == $('#select_change_bowler option:selected').val() 
-						&& spell.spellNumber > spellNo) {
-						spellNo = spell.spellNumber;
-					}
-				});
+				if(inn.spells != null) {
+					inn.spells.forEach(function(spell,spell_index,spell_arr){
+						if(spell.playerId == $('#select_change_bowler option:selected').val() 
+							&& spell.spellNumber > spellNo) {
+							spellNo = spell.spellNumber;
+						}
+					});
+				}
 			}
 		});
 		$('#select_bowling_spell').empty();
@@ -1292,10 +1338,13 @@ function processUserSelection(whichInput, extraData)
 		}
 		break;
 	case 'cancel_match_setup_btn':
+	    window.location.href = 'match';
+	    break;
+/*	case 'cancel_match_setup_btn':
 		document.setup_form.method = 'post';
 		document.setup_form.action = 'match';
 	   	document.setup_form.submit();
-		break;
+		break;*/
 	case 'matchFileName':
 		if(!document.getElementById('matchFileName').value.toLowerCase().includes('.json')) {
 			document.getElementById('matchFileName').value = 
@@ -1390,20 +1439,25 @@ function processUserSelection(whichInput, extraData)
 		if($('#select_match_status option:selected').val() == 'start') {
 			match_data.match.inning.forEach(function(inns_item,index,arr){
 				if(document.getElementById('select_match_innings').value == inns_item.inningNumber) {
-					inns_item.bowlingCard.forEach(function(bwl_tm_item,index,arr){
-						if(bwl_tm_item.status.toLowerCase().includes('current') && bwl_tm_item.balls > 0) {
-							inns_item.spells.forEach(function(spell,spell_index,spell_arr){
-								if(spell.playerId == bwl_tm_item.playerId) {
-									spellNo = spell.spellNumber;
+					if(inns_item.bowlingCard != null) {
+						inns_item.bowlingCard.forEach(function(bwl_tm_item,index,arr){
+							if(bwl_tm_item.status.toLowerCase().includes('current') && bwl_tm_item.balls > 0) {
+								spellNo = 0;
+								if(inns_item.spells != null) {
+									inns_item.spells.forEach(function(spell,spell_index,spell_arr){
+										if(spell.playerId == bwl_tm_item.playerId) {
+											spellNo = spell.spellNumber;
+										}
+									});
 								}
-							});
-							if(spellNo > 0) {
-								if(confirm(bwl_tm_item.player.ticker_name + ' last spell number was ' + spellNo + '. Do you wish to start a new spell?') == true) {
-									option =  parseInt(spellNo + 1) + ',' + bwl_tm_item.playerId;
-								}													
+								if(spellNo > 0) {
+									if(confirm(bwl_tm_item.player.ticker_name + ' last spell number was ' + spellNo + '. Do you wish to start a new spell?') == true) {
+										option =  parseInt(spellNo + 1) + ',' + bwl_tm_item.playerId;
+									}													
+								}
 							}
-						}
-					});
+						});
+					}
 				}
 			});	
 		}
@@ -1566,19 +1620,23 @@ function processUserSelection(whichInput, extraData)
 			match_data.match.inning.forEach(function(inn,index,arr){
 				if(inn.inningNumber == $('#select_overwrite_batsman_out_inning option:selected').val()) {
 					if(inn.battingTeamId == match_data.setup.homeTeamId) {
-						match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
-							option = document.createElement('option');
-							option.value = hos.playerId;
-						    option.text = hos.ticker_name;
-						    select.appendChild(option);
-						});
+						if(match_data.setup.homeOtherSquad != null) {
+							match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
+								option = document.createElement('option');
+								option.value = hos.playerId;
+							    option.text = hos.ticker_name;
+							    select.appendChild(option);
+							});
+						}
 					} else if(inn.battingTeamId == match_data.setup.awayTeamId) {
-						match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
-							option = document.createElement('option');
-							option.value = aos.playerId;
-						    option.text = aos.ticker_name;
-						    select.appendChild(option);
-						});
+						if(match_data.setup.awayOtherSquad != null) {
+							match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
+								option = document.createElement('option');
+								option.value = aos.playerId;
+							    option.text = aos.ticker_name;
+							    select.appendChild(option);
+							});
+						}
 					}
 				}
 			});
@@ -1682,21 +1740,23 @@ function processUserSelection(whichInput, extraData)
 		
 			match_data.match.inning.forEach(function(inn,index,arr){
 				if(inn.inningNumber == $('#select_overwrite_partnerships_inning option:selected').val()) {
-					inn.partnerships.forEach(function(part,index,arr){
-						if(part.partnershipNumber == $('#select_overwrite_partnerships').val()) {
-							document.getElementById('overwrite_partnership_first_batter_runs').value = part.firstBatterRuns;
-							document.getElementById('overwrite_partnership_second_batter_runs').value = part.secondBatterRuns;
-							document.getElementById('overwrite_partnership_first_batter_balls').value = part.firstBatterBalls;
-							document.getElementById('overwrite_partnership_second_batter_balls').value = part.secondBatterBalls;
-							document.getElementById('overwrite_partnership_total_runs').value = part.totalRuns;
-							document.getElementById('overwrite_partnership_total_balls').value = part.totalBalls;
-							document.getElementById('overwrite_partnership_total_fours').value = part.totalFours;
-							document.getElementById('overwrite_partnership_total_sixes').value = part.totalSixes;
-							if(match_data.setup.specialMatchRules != null && match_data.setup.specialMatchRules == 'ISPL'){
-								document.getElementById('overwrite_partnership_total_nines').value = part.totalNines;
+					if(inn.partnerships != null) {
+						inn.partnerships.forEach(function(part,index,arr){
+							if(part.partnershipNumber == $('#select_overwrite_partnerships').val()) {
+								document.getElementById('overwrite_partnership_first_batter_runs').value = part.firstBatterRuns;
+								document.getElementById('overwrite_partnership_second_batter_runs').value = part.secondBatterRuns;
+								document.getElementById('overwrite_partnership_first_batter_balls').value = part.firstBatterBalls;
+								document.getElementById('overwrite_partnership_second_batter_balls').value = part.secondBatterBalls;
+								document.getElementById('overwrite_partnership_total_runs').value = part.totalRuns;
+								document.getElementById('overwrite_partnership_total_balls').value = part.totalBalls;
+								document.getElementById('overwrite_partnership_total_fours').value = part.totalFours;
+								document.getElementById('overwrite_partnership_total_sixes').value = part.totalSixes;
+								if(match_data.setup.specialMatchRules != null && match_data.setup.specialMatchRules == 'ISPL'){
+									document.getElementById('overwrite_partnership_total_nines').value = part.totalNines;
+								}
 							}
-						}
-					});
+						});
+					}
 				}
 			});
 			break;
@@ -1988,21 +2048,23 @@ function processCricketProcedures(whatToProcess, whichInput)
 				if(whichInput.id.toLowerCase().includes('result') && inn.inningNumber == 1) {
 					error_txt = "Result not available in 1st inning";
 				}
-				inn.bowlingCard.forEach(function(bc,index,arr){
-					if(bc.status.toLowerCase() == 'currentbowler') {
-						cur_bowler_balls = bc.balls;
-						current_bowler_error = bc.player.ticker_name + ' already in. Option NOT available';
-					} else if(bc.status.toLowerCase() == 'lastbowler') {
-						if(whatToProcess == 'CHANGE_BOWLER') {
-							if(bc.playerId == $('#select_change_bowler option:selected').val()) {
-								previous_bowler_repeat_error = bc.player.ticker_name + ' has bowled previous over';
-								if(bc.overs >= (match_data.setup.maxOvers / 5)){
-									previous_bowler_repeat_error = bc.player.ticker_name + ' has bowled maximum overs allowed';
+				if(inn.bowlingCard != null) {
+					inn.bowlingCard.forEach(function(bc,index,arr){
+						if(bc.status.toLowerCase() == 'currentbowler') {
+							cur_bowler_balls = bc.balls;
+							current_bowler_error = bc.player.ticker_name + ' already in. Option NOT available';
+						} else if(bc.status.toLowerCase() == 'lastbowler') {
+							if(whatToProcess == 'CHANGE_BOWLER') {
+								if(bc.playerId == $('#select_change_bowler option:selected').val()) {
+									previous_bowler_repeat_error = bc.player.ticker_name + ' has bowled previous over';
+									if(bc.overs >= (match_data.setup.maxOvers / 5)){
+										previous_bowler_repeat_error = bc.player.ticker_name + ' has bowled maximum overs allowed';
+									}
 								}
 							}
 						}
-					}
-				});
+					});
+				}
 				inn.battingCard.forEach(function(bc,index,arr){
 					if(whichInput.id.toLowerCase().includes('new_batsman')) {
 						if(bc.playerId == whichInput.id.split(',')[1]) {
@@ -2187,7 +2249,7 @@ function processCricketProcedures(whatToProcess, whichInput)
 
 	$.ajax({    
         type : 'Get',     
-        url : '/CricketScoring/processCricketProcedures',     
+		url: 'processCricketProcedures',     
         data : ajax_data_to_send, 
         dataType : 'json',
         success : function(data) {
@@ -2900,13 +2962,15 @@ function addItemsToList(whatToProcess, dataToProcess)
 		select.id = 'select_overwrite_partnerships';
 		match_data.match.inning.forEach(function(inn,index,arr){
 			if(inn.inningNumber == $('#select_overwrite_partnerships_inning option:selected').val()) {
-			    inn.partnerships.forEach(function(part,part_index,bc_arr){
-					option = document.createElement('option');
-					option.value = part.partnershipNumber;
-				    option.text = part.firstPlayer.ticker_name + '/' + part.secondPlayer.ticker_name;
-				    option.selected = true;
-				    select.appendChild(option);
-			    });
+			    if(inn.partnerships != null) {
+					inn.partnerships.forEach(function(part,part_index,bc_arr){
+						option = document.createElement('option');
+						option.value = part.partnershipNumber;
+					    option.text = part.firstPlayer.ticker_name + '/' + part.secondPlayer.ticker_name;
+					    option.selected = true;
+					    select.appendChild(option);
+					});
+				}
 			}
 		});
 		select.setAttribute('onchange','processUserSelection(this);');
@@ -2977,7 +3041,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 		}
 		
 		match_data.match.inning.forEach(function(inn,index,arr){
-			if(inn.inningNumber == $('#select_overwrite_partnerships_inning option:selected').val()) {
+			if(inn.inningNumber == $('#select_overwrite_partnerships_inning option:selected').val() && inn.partnerships != null) {
 			    inn.partnerships.forEach(function(part,part_index,bc_arr){
 					if(part.partnershipNumber == $('#select_overwrite_partnerships').val()) {
 						for(var i=1; i<=max_cols; i++) {
@@ -3066,7 +3130,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 		select = document.createElement('select');
 		select.id = 'select_overwrite_bowler';
 		match_data.match.inning.forEach(function(inn,index,arr){
-			if(inn.isCurrentInning.toLowerCase() == 'yes') {
+			if(inn.isCurrentInning.toLowerCase() == 'yes' && inn.bowlingCard != null) {
 			    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
@@ -3129,7 +3193,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 		}
 
 		match_data.match.inning.forEach(function(inn,index,arr){
-			if(inn.inningNumber == $('#select_overwrite_bowler_inning option:selected').val()) {
+			if(inn.inningNumber == $('#select_overwrite_bowler_inning option:selected').val() && inn.bowlingCard != null) {
 				inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 					if(bc.playerId == $('#select_overwrite_bowler').val()) {
 						for(var i=1; i<=max_cols; i++) {
@@ -3253,7 +3317,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 		select = document.createElement('select');
 		select.id = 'select_overwrite_batsman';
 		match_data.match.inning.forEach(function(inn,index,arr){
-			if(inn.isCurrentInning.toLowerCase() == 'yes') {
+			if(inn.isCurrentInning.toLowerCase() == 'yes' && inn.battingCard != null) {
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 					if(bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
@@ -3714,14 +3778,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 				option.value = '';
 			    option.text = '';
 			    select.appendChild(option);
-				if(inn.battingTeamId == match_data.setup.homeTeamId) {
+				if(inn.battingTeamId == match_data.setup.homeTeamId && match_data.setup.homeOtherSquad != null) {
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.ticker_name;
 					    select.appendChild(option);
 					});
-				} else if(inn.battingTeamId == match_data.setup.awayTeamId) {
+				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
@@ -3737,23 +3801,25 @@ function addItemsToList(whatToProcess, dataToProcess)
 
 				select = document.createElement('select');
 				select.id = 'select_overwrite_batsman_howOutFielderId';
-				inn.fielders.forEach(function(field,index,arr){
-					option = document.createElement('option');
-					option.value = field.playerId;
-				    option.text = field.ticker_name;
-				    if(field.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
-					    option.selected = true;
-				    }
-				    select.appendChild(option);
-				});
-				if(inn.bowlingTeamId == match_data.setup.homeTeamId) {
+				if(inn.fielders != null) {
+					inn.fielders.forEach(function(field,index,arr){
+						option = document.createElement('option');
+						option.value = field.playerId;
+					    option.text = field.ticker_name;
+					    if(field.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
+						    option.selected = true;
+					    }
+					    select.appendChild(option);
+					});
+				}
+				if(inn.bowlingTeamId == match_data.setup.homeTeamId && match_data.setup.homeOtherSquad != null) {
 					match_data.setup.homeOtherSquad.forEach(function(field,index,arr){
 						option = document.createElement('option');
 						option.value = field.playerId;
 					    option.text = field.ticker_name + ' (SUB)';
 					    select.appendChild(option);
 					});
-				} else if(inn.bowlingTeamId == match_data.setup.awayTeamId) {
+				} else if(inn.bowlingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(field,index,arr){
 						option = document.createElement('option');
 						option.value = field.playerId;
@@ -3774,12 +3840,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 				
 				select = document.createElement('select');
 				select.id = 'select_overwrite_batsman_howOutBowlerId';
-				inn.bowlingCard.forEach(function(bc,index,arr){
-					option = document.createElement('option');
-					option.value = bc.playerId;
-				    option.text = bc.player.ticker_name;
-				    select.appendChild(option);
-				});
+				if(inn.bowlingCard != null) {
+					inn.bowlingCard.forEach(function(bc,index,arr){
+						option = document.createElement('option');
+						option.value = bc.playerId;
+					    option.text = bc.player.ticker_name;
+					    select.appendChild(option);
+					});
+				}
 				header_text = document.createElement('label');
 				header_text.innerHTML = 'Bowler: ';
 				header_text.htmlFor = select.id;
@@ -4242,18 +4310,22 @@ function addItemsToList(whatToProcess, dataToProcess)
 							    option.text = hp.full_name;
 							    select.appendChild(option);
 							});
-							dataToProcess.setup.homeSubstitutes.forEach(function(hp,index,arr){
-								option = document.createElement('option');
-								option.value = hp.playerId;
-							    option.text = hp.full_name;
-							    select.appendChild(option);
-							});
-							dataToProcess.setup.homeOtherSquad.forEach(function(hp,index,arr){
-								option = document.createElement('option');
-								option.value = hp.playerId;
-							    option.text = hp.full_name;
-							    select.appendChild(option);
-							});
+							if(dataToProcess.setup.homeSubstitutes != null) {
+								dataToProcess.setup.homeSubstitutes.forEach(function(hp,index,arr){
+									option = document.createElement('option');
+									option.value = hp.playerId;
+								    option.text = hp.full_name;
+								    select.appendChild(option);
+								});
+							}
+							if(dataToProcess.setup.homeOtherSquad != null) {
+								dataToProcess.setup.homeOtherSquad.forEach(function(hp,index,arr){
+									option = document.createElement('option');
+									option.value = hp.playerId;
+								    option.text = hp.full_name;
+								    select.appendChild(option);
+								});
+							}
 						} else if(j==4) {
 							select.name = 'selectAwayPlayers';
 							select.id = 'awayPlayer_' + (i + 1);
@@ -4263,32 +4335,40 @@ function addItemsToList(whatToProcess, dataToProcess)
 							    option.text = ap.full_name;
 							    select.appendChild(option);
 							});
-							dataToProcess.setup.awaySubstitutes.forEach(function(ap,index,arr){
-								option = document.createElement('option');
-								option.value = ap.playerId;
-							    option.text = ap.full_name;
-							    select.appendChild(option);
-							});
-							dataToProcess.setup.awayOtherSquad.forEach(function(ap,index,arr){
-								option = document.createElement('option');
-								option.value = ap.playerId;
-							    option.text = ap.full_name;
-							    select.appendChild(option);
-							});
+							if(dataToProcess.setup.awaySubstitutes != null) {
+								dataToProcess.setup.awaySubstitutes.forEach(function(ap,index,arr){
+									option = document.createElement('option');
+									option.value = ap.playerId;
+								    option.text = ap.full_name;
+								    select.appendChild(option);
+								});
+							}
+							if(dataToProcess.setup.awayOtherSquad != null) {
+								dataToProcess.setup.awayOtherSquad.forEach(function(ap,index,arr){
+									option = document.createElement('option');
+									option.value = ap.playerId;
+								    option.text = ap.full_name;
+								    select.appendChild(option);
+								});
+							}
 						}
 					    select.selectedIndex = i;
 						if(j==1) {
-							dataToProcess.setup.setupHomeTeam.split(",").forEach(function (ht) {
-								if(ht.split("|")[0] == (i + 1)) {
-									select.value = ht.split("|")[1];
-								}
-							});
+							if(dataToProcess.setup.setupHomeTeam != null) {
+								dataToProcess.setup.setupHomeTeam.split(",").forEach(function (ht) {
+									if(ht.split("|")[0] == (i + 1)) {
+										select.value = ht.split("|")[1];
+									}
+								});
+							}
 						} else if(j==4) {
-							dataToProcess.setup.setupAwayTeam.split(",").forEach(function (at) {
-								if(at.split("|")[0] == (i + 1)) {
-									select.value = at.split("|")[1];
-								}
-							});
+							if(dataToProcess.setup.setupAwayTeam != null) {
+								dataToProcess.setup.setupAwayTeam.split(",").forEach(function (at) {
+									if(at.split("|")[0] == (i + 1)) {
+										select.value = at.split("|")[1];
+									}
+								});
+							}
 						}
 						break;
 					case 2: case 5:
@@ -4325,25 +4405,29 @@ function addItemsToList(whatToProcess, dataToProcess)
 						}
 						if(i <= 10) {
 							if(j==2) {
-								dataToProcess.setup.setupHomeTeam.split(",").forEach(function (ht) {
-									if(ht.split("|")[0] == (i + 1)) {
-										dataToProcess.setup.homeSquad.forEach(function (hs) {
-											if(ht.split("|")[1] == hs.playerId) {
-												select.value = hs.captainWicketKeeper;
-											}
-										});
-									}
-								});
+								if(dataToProcess.setup.setupHomeTeam != null) {
+									dataToProcess.setup.setupHomeTeam.split(",").forEach(function (ht) {
+										if(ht.split("|")[0] == (i + 1)) {
+											dataToProcess.setup.homeSquad.forEach(function (hs) {
+												if(ht.split("|")[1] == hs.playerId) {
+													select.value = hs.captainWicketKeeper;
+												}
+											});
+										}
+									});
+								}
 							} else if(j==5) {
-								dataToProcess.setup.setupAwayTeam.split(",").forEach(function (at) {
-									if(at.split("|")[0] == (i + 1)) {
-										dataToProcess.setup.awaySquad.forEach(function (as) {
-											if(at.split("|")[1] == as.playerId) {
-												select.value = as.captainWicketKeeper;
-											}
-										});
-									}
-								});
+								if(dataToProcess.setup.setupAwayTeam != null) {
+									dataToProcess.setup.setupAwayTeam.split(",").forEach(function (at) {
+										if(at.split("|")[0] == (i + 1)) {
+											dataToProcess.setup.awaySquad.forEach(function (as) {
+												if(at.split("|")[1] == as.playerId) {
+													select.value = as.captainWicketKeeper;
+												}
+											});
+										}
+									});
+								}
 							}
 						}
 						break;
@@ -4436,14 +4520,16 @@ function addItemsToList(whatToProcess, dataToProcess)
 							}
 						}
 					});
-					dataToProcess.match.daysSessions.forEach(function(ds,index,arr){
-						if(ds.isCurrentSession != null && ds.isCurrentSession.toUpperCase() == 'YES') {
-							document.getElementById('selected_day_session').innerHTML = 'Selected day = ' + ds.dayNumber 
-								+ ' & selected session = ' + ds.sessionNumber;
-							document.getElementById('select_day').value = ds.dayNumber;
-							document.getElementById('select_session').value = ds.sessionNumber;
-						}
-					});
+					if(dataToProcess.match.daysSessions != null) {
+						dataToProcess.match.daysSessions.forEach(function(ds,index,arr){
+							if(ds.isCurrentSession != null && ds.isCurrentSession.toUpperCase() == 'YES') {
+								document.getElementById('selected_day_session').innerHTML = 'Selected day = ' + ds.dayNumber 
+									+ ' & selected session = ' + ds.sessionNumber;
+								document.getElementById('select_day').value = ds.dayNumber;
+								document.getElementById('select_session').value = ds.sessionNumber;
+							}
+						});
+					}
 				}
 			}
 		}
@@ -4894,7 +4980,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			successful_reviews_2 = 0, unsuccessful_reviews_2 = 0, retained_reviews_2 = 0, unretained_reviews_2 = 0;
 		match_data.match.inning.forEach(function(inn,index,arr){
 			if(inn.isCurrentInning.toLowerCase() == 'yes') {
-				if(inn.reviews) {
+				if(inn.reviews != null) {
 					inn.reviews.forEach(function(rev,index,arr){
 						if(rev.reviewTeamId == match_data.setup.homeTeamId) {
 							if(rev.reviewRetained.toLowerCase() == 'retained') {
@@ -5669,18 +5755,22 @@ function addItemsToList(whatToProcess, dataToProcess)
 						}
 					    select.appendChild(option);
 					});
-					match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-						option.text = hs.ticker_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-						option.text = hs.ticker_name;
-					    select.appendChild(option);
-					});
+					if(match_data.setup.homeSubstitutes != null) {
+						match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = hs.playerId;
+							option.text = hs.ticker_name;
+						    select.appendChild(option);
+						});
+					}
+					if(match_data.setup.homeOtherSquad != null) {
+						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = hs.playerId;
+							option.text = hs.ticker_name;
+						    select.appendChild(option);
+						});
+					}
 				}else if(inn.bowlingTeamId == match_data.setup.awayTeamId) {
 					match_data.setup.awaySquad.forEach(function(as,as_index,bc_arr){
 						option = document.createElement('option');
@@ -5691,18 +5781,22 @@ function addItemsToList(whatToProcess, dataToProcess)
 						}
 					    select.appendChild(option);
 					});
-					match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-						option.text = as.ticker_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-						option.text = as.ticker_name;
-					    select.appendChild(option);
-					});
+					if(match_data.setup.awaySubstitutes != null) {
+						match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = as.playerId;
+							option.text = as.ticker_name;
+						    select.appendChild(option);
+						});
+					}
+					if(match_data.setup.awayOtherSquad != null) {
+						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = as.playerId;
+							option.text = as.ticker_name;
+						    select.appendChild(option);
+						});
+					}
 				}
 			    select.setAttribute('onchange','processUserSelection(this);');
 
@@ -5737,19 +5831,21 @@ function addItemsToList(whatToProcess, dataToProcess)
 
 		select = document.createElement('select');
 		select.id = 'select_bowling_end';
-		for(var i=0;i<=1;i++) {
-			option = document.createElement('option');
-			if(i==0) {
-				option.value = 1;
-				option.text = match_data.setup.ground.first_bowling_end;
-			} else {
-				option.value = 2;
-				option.text = match_data.setup.ground.second_bowling_end;
+		if(match_data.setup.ground != null) {
+			for(var i=0;i<=1;i++) {
+				option = document.createElement('option');
+				if(i==0) {
+					option.value = 1;
+					option.text = match_data.setup.ground.first_bowling_end;
+				} else {
+					option.value = 2;
+					option.text = match_data.setup.ground.second_bowling_end;
+				}
+				if(last_bowl_end > 0 && last_bowl_end != option.value) {
+					option.selected = true;
+				}
+			    select.appendChild(option);
 			}
-			if(last_bowl_end > 0 && last_bowl_end != option.value) {
-				option.selected = true;
-			}
-		    select.appendChild(option);
 		}
 		header_text = document.createElement('label');
 		header_text.innerHTML = 'Bowling End ';
@@ -5946,14 +6042,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 				option.value = '';
 			    option.text = '';
 			    select.appendChild(option);
-				if(inn.battingTeamId == match_data.setup.homeTeamId) {
+				if(inn.battingTeamId == match_data.setup.homeTeamId && match_data.setup.homeOtherSquad != null) {
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.ticker_name;
 					    select.appendChild(option);
 					});
-				} else if(inn.battingTeamId == match_data.setup.awayTeamId) {
+				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
@@ -6001,19 +6097,23 @@ function addItemsToList(whatToProcess, dataToProcess)
 					    option.text = hs.ticker_name;
 					    select.appendChild(option);
 					});
-					match_data.setup.homeSubstitutes.sort(
-						(a, b) => a.playerPosition - b.playerPosition).forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
-					    select.appendChild(option);
-					});
+					if(match_data.setup.homeSubstitutes != null) {
+						match_data.setup.homeSubstitutes.sort(
+							(a, b) => a.playerPosition - b.playerPosition).forEach(function(hs,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = hs.playerId;
+						    option.text = hs.ticker_name;
+						    select.appendChild(option);
+						});
+					}
+					if(match_data.setup.homeOtherSquad != null) {
+						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = hs.playerId;
+						    option.text = hs.ticker_name;
+						    select.appendChild(option);
+						});
+					}
 				}else if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.awayTeamId) {
 					match_data.setup.awaySquad.forEach(function(as,bc_index,bc_arr){
 						option = document.createElement('option');
@@ -6021,19 +6121,23 @@ function addItemsToList(whatToProcess, dataToProcess)
 					    option.text = as.ticker_name;
 					    select.appendChild(option);
 					});
-					match_data.setup.awaySubstitutes.sort(
-						(a, b) => a.playerPosition - b.playerPosition).forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-					    option.text = as.ticker_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-					    option.text = as.ticker_name;
-					    select.appendChild(option);
-					});
+					if(match_data.setup.awaySubstitutes != null) {
+						match_data.setup.awaySubstitutes.sort(
+							(a, b) => a.playerPosition - b.playerPosition).forEach(function(as,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = as.playerId;
+						    option.text = as.ticker_name;
+						    select.appendChild(option);
+						});
+					}
+					if(match_data.setup.awayOtherSquad != null) {
+						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = as.playerId;
+						    option.text = as.ticker_name;
+						    select.appendChild(option);
+						});
+					}
 				}
 				//Don't know fielder (substitute)
 				option = document.createElement('option');
@@ -6250,14 +6354,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 	    select.appendChild(option);
 		match_data.match.inning.forEach(function(inn,index,arr){
 			if(inn.isCurrentInning.toLowerCase() == 'yes') {
-				if(inn.battingTeamId == match_data.setup.homeTeamId) {
+				if(inn.battingTeamId == match_data.setup.homeTeamId && match_data.setup.homeOtherSquad != null) {
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.ticker_name;
 					    select.appendChild(option);
 					});
-				} else if(inn.battingTeamId == match_data.setup.awayTeamId) {
+				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
@@ -6328,18 +6432,22 @@ function addItemsToList(whatToProcess, dataToProcess)
 					    option.text = hs.ticker_name;
 					    select.appendChild(option);
 					});
-					match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
-					    select.appendChild(option);
-					});
+					if(match_data.setup.homeSubstitutes != null) {
+						match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = hs.playerId;
+						    option.text = hs.ticker_name;
+						    select.appendChild(option);
+						});
+					}
+					if(match_data.setup.homeOtherSquad != null) {
+						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = hs.playerId;
+						    option.text = hs.ticker_name;
+						    select.appendChild(option);
+						});
+					}
 				}else if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.awayTeamId) {
 					match_data.setup.awaySquad.forEach(function(as,bc_index,bc_arr){
 						option = document.createElement('option');
@@ -6347,18 +6455,22 @@ function addItemsToList(whatToProcess, dataToProcess)
 					    option.text = as.ticker_name;
 					    select.appendChild(option);
 					});
-					match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-					    option.text = as.ticker_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-					    option.text = as.ticker_name;
-					    select.appendChild(option);
-					});
+					if(match_data.setup.awaySubstitutes != null) {
+						match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = as.playerId;
+						    option.text = as.ticker_name;
+						    select.appendChild(option);
+						});
+					}
+					if(match_data.setup.awayOtherSquad != null) {
+						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
+							option = document.createElement('option');
+							option.value = as.playerId;
+						    option.text = as.ticker_name;
+						    select.appendChild(option);
+						});
+					}
 				}
 				//Don't know fielder (substitute)
 				option = document.createElement('option');
@@ -6831,7 +6943,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 								if(inn.isCurrentInning.toLowerCase() == 'yes') {
 									if(inn.battingTeamId == dataToProcess.setup.homeTeamId) {
 										inn.battingCard.forEach(function(bc,index,arr){
-											if(bc.status.toLowerCase() == 'stilltobat' || bc.howOut.toLowerCase() == 'concussed') {
+											if((bc.status != null && bc.status.toLowerCase() == 'stilltobat') || (bc.howOut != null && bc.howOut.toLowerCase() == 'concussed')) {
 												batters_plyrs.push(bc.player);
 											}
 										});
@@ -6840,9 +6952,11 @@ function addItemsToList(whatToProcess, dataToProcess)
 												batters_plyrs.push(hs);
 											});
 										}
-										match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-											batters_plyrs.push(hs);
-										});
+										if(match_data.setup.homeSubstitutes != null) {
+											match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
+												batters_plyrs.push(hs);
+											});
+										}
 									}else if(inn.battingTeamId == dataToProcess.setup.awayTeamId) {
 										inn.battingCard.forEach(function(bc,index,arr){
 											if((bc.status != null && bc.status.toLowerCase() == 'stilltobat') || (bc.howOut != null && bc.howOut.toLowerCase() == 'concussed')) {
@@ -6854,9 +6968,11 @@ function addItemsToList(whatToProcess, dataToProcess)
 												batters_plyrs.push(as);
 											});
 										}
-										match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
-											batters_plyrs.push(as);
-										});
+										if(match_data.setup.awaySubstitutes != null) {
+											match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
+												batters_plyrs.push(as);
+											});
+										}
 									}
 								}
 							});
@@ -7054,22 +7170,24 @@ function addItemsToList(whatToProcess, dataToProcess)
 					cell = row.insertCell(1);
 					cell.innerHTML = 'Total: ' + inns_item.totalRuns + '-' + inns_item.totalWickets;
 					if(dataToProcess.setup.specialMatchRules != null && dataToProcess.setup.specialMatchRules == 'ISPL'){
+						
+						if(match_data.eventFile.events != null) {
+							for (var i = match_data.eventFile.events.length - 1; i >= 0; i--) {
 
-						for (var i = match_data.eventFile.events.length - 1; i >= 0; i--) {
+							  if (match_data.eventFile.events[i].eventExtra != null && match_data.eventFile.events[i].eventExtra.toUpperCase() == 'CHALLENGE' 
+							  	&& match_data.eventFile.events[i].eventInningNumber == inns_item.inningNumber
+							  	&& inns_item.totalOvers >= parseInt(match_data.eventFile.events[i].eventOverNo + 1)) {
 
-						  if (match_data.eventFile.events[i].eventExtra != null && match_data.eventFile.events[i].eventExtra.toUpperCase() == 'CHALLENGE' 
-						  	&& match_data.eventFile.events[i].eventInningNumber == inns_item.inningNumber
-						  	&& inns_item.totalOvers >= parseInt(match_data.eventFile.events[i].eventOverNo + 1)) {
-
-							if(inns_item.specialRuns) {
-								if (inns_item.specialRuns.startsWith('+')) {
-									cell.innerHTML = 'Total: ' + parseInt(inns_item.totalRuns + parseInt(inns_item.specialRuns.replace('+', ''))) + '-' + inns_item.totalWickets;
-								}else if (inns_item.specialRuns.startsWith('-')) {
-									cell.innerHTML = 'Total: ' + parseInt(inns_item.totalRuns - parseInt(inns_item.specialRuns.replace('-', ''))) + '-' + inns_item.totalWickets;
+								if(inns_item.specialRuns) {
+									if (inns_item.specialRuns.startsWith('+')) {
+										cell.innerHTML = 'Total: ' + parseInt(inns_item.totalRuns + parseInt(inns_item.specialRuns.replace('+', ''))) + '-' + inns_item.totalWickets;
+									}else if (inns_item.specialRuns.startsWith('-')) {
+										cell.innerHTML = 'Total: ' + parseInt(inns_item.totalRuns - parseInt(inns_item.specialRuns.replace('-', ''))) + '-' + inns_item.totalWickets;
+									}
 								}
+								break;
+							  }
 							}
-					    	break;
-						  }
 						}
 					}
 
@@ -7154,31 +7272,33 @@ function addItemsToList(whatToProcess, dataToProcess)
 					
 					tbody = document.createElement('tbody');
 					
-					inns_item.bowlingCard.forEach(function(bwl_tm_item,index,arr){
-						  
-						  row = tbody.insertRow(tbody.rows.length);
-							
-						  cell = row.insertCell(0);
-						  cell.innerHTML = bwl_tm_item.player.ticker_name;
-						  cell.title = bwl_tm_item.player.full_name;
+					if(inns_item.bowlingCard != null) {
+						inns_item.bowlingCard.forEach(function(bwl_tm_item,index,arr){
+							  
+							  row = tbody.insertRow(tbody.rows.length);
+								
+							  cell = row.insertCell(0);
+							  cell.innerHTML = bwl_tm_item.player.ticker_name;
+							  cell.title = bwl_tm_item.player.full_name;
 
-						  cell = row.insertCell(1);
-						  cell.innerHTML = bwl_tm_item.overs + '.' + bwl_tm_item.balls;
-						  
-						  cell = row.insertCell(2);
-						  cell.innerHTML = bwl_tm_item.runs;
+							  cell = row.insertCell(1);
+							  cell.innerHTML = bwl_tm_item.overs + '.' + bwl_tm_item.balls;
+							  
+							  cell = row.insertCell(2);
+							  cell.innerHTML = bwl_tm_item.runs;
 
-						  cell = row.insertCell(3);
-						  cell.innerHTML = bwl_tm_item.wickets;
+							  cell = row.insertCell(3);
+							  cell.innerHTML = bwl_tm_item.wickets;
 
-						  cell = row.insertCell(4);
-						  cell.innerHTML = bwl_tm_item.dots + '/' + bwl_tm_item.maidens;
+							  cell = row.insertCell(4);
+							  cell.innerHTML = bwl_tm_item.dots + '/' + bwl_tm_item.maidens;
 
-					      if(bwl_tm_item.status != null && bwl_tm_item.status.toLowerCase() == 'currentbowler') {
-							  $(row).find('td').css({color: 'white','background-color': 'brown'});
-					      }
+						      if(bwl_tm_item.status != null && bwl_tm_item.status.toLowerCase() == 'currentbowler') {
+								  $(row).find('td').css({color: 'white','background-color': 'brown'});
+						      }
 
-					});
+						});
+					}
 
 					table.appendChild(tbody);
 

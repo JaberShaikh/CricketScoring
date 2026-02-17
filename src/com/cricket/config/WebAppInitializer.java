@@ -23,13 +23,15 @@ public class WebAppInitializer extends AbstractAnnotationConfigDispatcherServlet
 
     @Override
     protected void customizeRegistration(ServletRegistration.Dynamic registration) {
-        registration.setMultipartConfig(
-            new MultipartConfigElement(
-                null,
-                10 * 1024 * 1024,   // maxFileSize
-                20 * 1024 * 1024,   // maxRequestSize
-                1 * 1024 * 1024     // fileSizeThreshold
-            )
-        );
+
+        MultipartConfigElement multipartConfig =
+                new MultipartConfigElement(
+                        null,              // location
+                        100_000_000,       // maxFileSize (100MB)
+                        100_000_000,       // maxRequestSize
+                        0                  // fileSizeThreshold
+                );
+
+        registration.setMultipartConfig(multipartConfig);
     }
 }
