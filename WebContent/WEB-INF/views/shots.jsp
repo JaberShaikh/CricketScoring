@@ -21,7 +21,7 @@
    
   </script>
 </head>
-<body onload="afterPageLoad('SHOT')">
+<body>
 <form:form name="shot_form" autocomplete="off">
 <div class="content py-2" style="background-color: #EAE8FF; color: #2E008B">
   <div class="container">

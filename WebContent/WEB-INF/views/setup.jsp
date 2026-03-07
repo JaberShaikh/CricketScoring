@@ -20,7 +20,7 @@
       <link rel="stylesheet" href="<c:url value="/resources/css/index.css"/>"/> 
    </head>
    <body onload="afterPageLoad('SETUP');">
-      <form:form name="setup_form" method="POST" action="save_match" >  <!-- enctype="multipart/form-data"> -->
+      <form:form id="setup_form" name="setup_form" method="POST" action="save_match" >
          <div class="content py-5" style="background-color: #EAE8FF; color: #2E008B">
             <div class="container">
                <div class="row">

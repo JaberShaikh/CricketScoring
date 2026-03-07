@@ -1,4 +1,4 @@
-var match_data, last_match_data, inning_timer, current_batter, wagonXcoOrd, wagonYcoOrd, xPerc, yPerc, canvas, ctx, 
+var match_data, last_match_data, inning_timer, current_batter, wagonXcoOrd, wagonYcoOrd, xPerc, yPerc, canvas, ctx, current_bat_style, 
 	backgroundImg, lastClickPerc = null, lastSector = null, imgX = 0, imgY = 0, imgW = 300, imgH = 300;
 function onWagonPageLoad()
 {
@@ -15,16 +15,16 @@ function onWagonPageLoad()
   // Remove full-window resize behavior — keep canvas fixed
   window.onresize = null;
 
-/*  current_batter = 'RHB';
+  current_bat_style = 'RHB';
   if(last_match_data) {
     last_match_data.match.inning.forEach(function(inns_item,index,arr){
       var sel = document.getElementById('select_match_innings');
       if (sel && sel.value == inns_item.inningNumber) {
         inns_item.battingCard.forEach(function(bat_tm_item,index,arr){
           if(bat_tm_item.status && bat_tm_item.status.toLowerCase() != 'stilltobat' || (bat_tm_item.howOut && bat_tm_item.howOut.trim() != '')) {
-            if(bat_tm_item.onStrike && bat_tm_item.onStrike.toLowerCase() == 'yes') {
+            if(bat_tm_item.onStrike != null && bat_tm_item.onStrike.toLowerCase() == 'yes') {
               if(bat_tm_item.player && bat_tm_item.player.battingStyle) {
-                current_batter = bat_tm_item.player.battingStyle.toUpperCase();
+                 current_bat_style = bat_tm_item.player.battingStyle.toUpperCase();
               }
             }
           }
@@ -32,20 +32,20 @@ function onWagonPageLoad()
       }
     });
   }
-  if(current_batter == 'LHB') {
+  backgroundImg = new Image();
+  if(current_bat_style.toUpperCase() === 'LHB') {
     backgroundImg.src = 'resources/images/wagon_lhb.jpeg';
   } else {
     backgroundImg.src = 'resources/images/wagon_rhb.jpeg';
   }
-  */
 
-  backgroundImg = new Image();
+/*  backgroundImg = new Image();
   if(match_data != null && match_data.match != null && match_data.match.wagonBatsmanStyle != null
 		&& match_data.match.wagonBatsmanStyle.toUpperCase() == 'LHB') {
     backgroundImg.src = 'resources/images/wagon_lhb.jpeg';
   } else {
     backgroundImg.src = 'resources/images/wagon_rhb.jpeg';
-  }
+  }*/
 
   lastClickPerc = null;
   lastSector = null;
@@ -606,6 +606,9 @@ function initialiseForm(whatToProcess, dataToProcess)
 		document.getElementById('wagon-panel').style.display = 'none';
 		document.getElementById('shots-panel').style.display = '';
    		document.getElementById('shots_sub_menu').className = 'panel-collapse collapse show';
+		
+		$('.aerial_ground_single_check_only, .boundary_single_check_only').prop('checked', false);
+				
 		break;
 		
 	case 'LOAD_WAGON_PAGE':
@@ -776,50 +779,15 @@ function uploadFormDataToSessionObjects(whatToProcess)
             $('input.aerial_ground_single_check_only:checked').attr('id') || '';
         break;
     default:
-        $('input:not([type="file"]), select, textarea').each(function () {
-            if (!this.id) return;
-            formData[this.id] = $(this).val() || '';
-        });
+		formData = $('#setup_form').serialize();
         break;
 	}
 	
-/*	switch(whatToProcess.toUpperCase()) {
-	case 'UPLOAD_WAGON_DATA':
-		formData['wagonData'] =
-		    $('#wagonData').val() + ',' +
-		    $('#selectBoundaryHeight option:selected').val() + ',' +
-		    $('#log_six_distance').val();
-		formData.append('wagonData',$('#wagonData').val() + ',' + $('#selectBoundaryHeight option:selected').val() 
-			+ ',' + $('#log_six_distance').val());  
-		break;
-	case 'UPLOAD_SHOT_DATA':
-		formData.append('shotData', $('input[class=aerial_ground_single_check_only]:checked').attr('id'));  
-		break;
-	default:
-		$('input, select, textarea').each(
-			function(index){  
-				if ($(this).is("select")) {
-				    formData[$(this).attr('id')] = $('#' + $(this).attr('id') + ' option:selected').val();
-				} else {
-				    formData[$(this).attr('id')] = $(this).val();
-				}
-				if($(this).is("select")) {
-					formData.append($(this).attr('id'),$('#' + $(this).attr('id') + ' option:selected').val());  
-				} else {
-					formData.append($(this).attr('id'),$(this).val());  
-				}	
-			}
-		);
-		break;
-	}*/
-
 	$.ajax({    
 		headers: {'X-CSRF-TOKEN': $('meta[name="_csrf"]').attr('content')},
-        url : url_path,     
+        url : url_path, 
         data : formData,
         cache: false,
-        //contentType: false,
-        //processData: false,
         type: 'POST',     
         success : function(data) {
 
@@ -1394,11 +1362,11 @@ function processUserSelection(whichInput, extraData)
 		}*/
 		switch ($(whichInput).attr('name')) {
 		case 'save_match_btn': 
-			option = findSelectDuplicates('name','selectHomePlayers');
+			option = findSelectDuplicatesByClass('selectHomePlayers');
 			if(option == '') {
-				option = findSelectDuplicates('name','selectAwayPlayers');
+				option = findSelectDuplicatesByClass('selectAwayPlayers');
 			} else {
-				option = option + ', ' + findSelectDuplicates('name','selectAwayPlayers');
+				option = option + ', ' + findSelectDuplicatesByClass('selectAwayPlayers');
 			} 
 			if(option != '') {
 				alert('Duplicate players found: ' + option);
@@ -1599,7 +1567,7 @@ function processUserSelection(whichInput, extraData)
 			match_data.match.inning.forEach(function(inn,index,arr){
 				if(inn.inningNumber == $('#select_overwrite_batsman_out_inning option:selected').val()) {
 					inn.battingCard.forEach(function(bc,bc_index,bc_arr){
-						if(bc.batsmanInningStarted.toLowerCase() == 'yes') {
+						if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 							option = document.createElement('option');
 							option.value = bc.player.playerId;
 						    option.text = bc.player.ticker_name;
@@ -1655,7 +1623,7 @@ function processUserSelection(whichInput, extraData)
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
 					    option.text = bc.player.ticker_name;
-					    if(bc.onStrike.toLowerCase() == 'yes') {
+					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
 					    select.appendChild(option);
@@ -1674,11 +1642,11 @@ function processUserSelection(whichInput, extraData)
 			match_data.match.inning.forEach(function(inn,index,arr){
 				if(inn.inningNumber == $('#select_overwrite_batsman_stats_inning option:selected').val()) {
 					inn.battingCard.forEach(function(bc,bc_index,bc_arr){
-						if(bc.batsmanInningStarted.toLowerCase() == 'yes') {
+						if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 							option = document.createElement('option');
 							option.value = bc.player.playerId;
 						    option.text = bc.player.ticker_name;
-						    if(bc.onStrike.toLowerCase() == 'yes') {
+						    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 							    option.selected = true;
 						    }
 						    select.appendChild(option);
@@ -1769,7 +1737,7 @@ function processUserSelection(whichInput, extraData)
 							document.getElementById('overwrite_batsman_balls').value = bc.balls;
 							document.getElementById('overwrite_batsman_fours').value = bc.fours;
 							document.getElementById('overwrite_batsman_sixes').value = bc.sixes;
-							document.getElementById('overwrite_batsman_on_strike').value = bc.onStrike;
+							document.getElementById('overwrite_batsman_on_strike').value = bc.onStrike == null ? '' : bc.onStrike;
 							document.getElementById('overwrite_batsman_minutes').value = bc.duration;
 							if(match_data.setup.specialMatchRules != null && match_data.setup.specialMatchRules == 'ISPL'){
 								document.getElementById('overwrite_batsman_nines').value = bc.nines;
@@ -2812,11 +2780,11 @@ function addItemsToList(whatToProcess, dataToProcess)
 		match_data.match.inning.forEach(function(inn,index,arr){
 			if(inn.isCurrentInning.toLowerCase() == 'yes') {
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
-					if(bc.batsmanInningStarted.toLowerCase() == 'yes') {
+					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
 					    option.text = bc.player.ticker_name;
-					    if(bc.onStrike.toLowerCase() == 'yes') {
+					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
 					    select.appendChild(option);
@@ -3319,11 +3287,11 @@ function addItemsToList(whatToProcess, dataToProcess)
 		match_data.match.inning.forEach(function(inn,index,arr){
 			if(inn.isCurrentInning.toLowerCase() == 'yes' && inn.battingCard != null) {
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
-					if(bc.batsmanInningStarted.toLowerCase() == 'yes') {
+					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
 					    option.text = bc.player.ticker_name;
-					    if(bc.onStrike.toLowerCase() == 'yes') {
+					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
 					    select.appendChild(option);
@@ -3403,7 +3371,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 								document.getElementById('overwrite_batsman_sixes').value = bc.sixes;
 								break;
 							case 5:
-								document.getElementById('overwrite_batsman_on_strike').value = bc.onStrike;
+								document.getElementById('overwrite_batsman_on_strike').value = bc.onStrike == null ? '' : bc.onStrike;
 								break;
 							case 6:
 								document.getElementById('overwrite_batsman_minutes').value = Math.floor(bc.duration / 60);
@@ -3456,7 +3424,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
 				    option.text = bc.player.ticker_name;
-				    if(bc.onStrike.toLowerCase() == 'yes') {
+				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
 				    select.appendChild(option);
@@ -3586,7 +3554,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
 				    option.text = bc.player.ticker_name;
-				    if(bc.onStrike.toLowerCase() == 'yes') {
+				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
 				    select.appendChild(option);
@@ -3606,7 +3574,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
 				    option.text = bc.player.ticker_name;
-				    if(bc.onStrike.toLowerCase() == 'yes') {
+				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
 				    select.appendChild(option);
@@ -3685,7 +3653,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 		match_data.match.inning.forEach(function(inn,index,arr){
 			if(inn.inningNumber == $('#select_overwrite_batsman_out_inning option:selected').val()) {
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
-					if(bc.batsmanInningStarted.toLowerCase() == 'yes') {
+					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
 					    option.text = bc.player.ticker_name;
@@ -3806,7 +3774,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						option = document.createElement('option');
 						option.value = field.playerId;
 					    option.text = field.ticker_name;
-					    if(field.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
+					    if(field.captainWicketKeeper != null && field.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						    option.selected = true;
 					    }
 					    select.appendChild(option);
@@ -3977,7 +3945,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 							break;
 						case 7:
 							option.id = 'overwrite_team_special_runs';
-							option.value = inn.specialRuns;
+							option.value = inn.specialRuns == null ? '' : inn.specialRuns;
 							header_text.innerHTML = 'Special Runs: ';
 							break;
 						}
@@ -4302,8 +4270,10 @@ function addItemsToList(whatToProcess, dataToProcess)
 						select = document.createElement('select');
 						select.style = 'width:75%';
 						if(j==1) {
-							select.name = 'selectHomePlayers';
+//							select.name = 'selectHomePlayers';
 							select.id = 'homePlayer_' + (i + 1);
+							select.name = select.id;
+							select.classList.add('selectHomePlayers');
 							dataToProcess.setup.homeSquad.forEach(function(hp,index,arr){
 								option = document.createElement('option');
 								option.value = hp.playerId;
@@ -4327,8 +4297,10 @@ function addItemsToList(whatToProcess, dataToProcess)
 								});
 							}
 						} else if(j==4) {
-							select.name = 'selectAwayPlayers';
+//							select.name = 'selectAwayPlayers';
 							select.id = 'awayPlayer_' + (i + 1);
+							select.name = select.id;
+							select.classList.add('selectHomePlayers');
 							dataToProcess.setup.awaySquad.forEach(function(ap,index,arr){
 								option = document.createElement('option');
 								option.value = ap.playerId;
@@ -4375,11 +4347,13 @@ function addItemsToList(whatToProcess, dataToProcess)
 						select = document.createElement('select');
 						select.style = 'width:75%';
 						if(j==2) {
-							select.name = 'selectHomeCaptainWicketKeeper';
+//							select.name = 'selectHomeCaptainWicketKeeper';
 							select.id = 'homeCaptainWicketKeeper_' + (i + 1);
+							select.name = select.id;
 						} else {
-							select.name = 'selectAwayCaptainWicketKeeper';
+//							select.name = 'selectAwayCaptainWicketKeeper';
 							select.id = 'awayCaptainWicketKeeper_' + (i + 1);
+							select.name = select.id;
 						}
 						for(var k=0; k<=3; k++) {
 							option = document.createElement('option');
@@ -5807,16 +5781,18 @@ function addItemsToList(whatToProcess, dataToProcess)
 				removeDuplicateOptions(select.id);
 				
 				plyr = 0;
-				for (var i = match_data.eventFile.events.length - 1; i >= 0; i--) {
-				  if (match_data.eventFile.events[i].eventType.toLowerCase() == 'change_bowler' 
-			  		&& match_data.eventFile.events[i].eventInningNumber == inn.inningNumber) {
-					if(last_bowl_end > 0) {
-						plyr = match_data.eventFile.events[i].eventBowlerNo;
-				    	break;
-					} else {
-				    	last_bowl_end = match_data.eventFile.events[i].eventBowlingEnd;
+				if(match_data.eventFile.events != null) {
+					for (var i = match_data.eventFile.events.length - 1; i >= 0; i--) {
+					  if (match_data.eventFile.events[i].eventType.toLowerCase() == 'change_bowler' 
+						&& match_data.eventFile.events[i].eventInningNumber == inn.inningNumber) {
+						if(last_bowl_end > 0) {
+							plyr = match_data.eventFile.events[i].eventBowlerNo;
+					    	break;
+						} else {
+					    	last_bowl_end = match_data.eventFile.events[i].eventBowlingEnd;
+						}
+					  }
 					}
-				  }
 				}
 				row = 0;
 				$('#' + select.id + ' > option').each(function() {
@@ -6025,7 +6001,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
 					    option.text = bc.player.ticker_name;
-					    if(bc.onStrike.toLowerCase() == 'yes') {
+					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
 					    select.appendChild(option);
@@ -6085,7 +6061,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
 				    option.text = bc.player.ticker_name;
-					if(bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
+					if(bc.player.captainWicketKeeper != null && bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						option.selected = true;
 					}
 				    select.appendChild(option);
@@ -6154,7 +6130,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				$('#' + select.id + ' > option').each(function() {
 					if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.homeTeamId) {
 						for(var plyr = 0; plyr <= match_data.setup.homeSquad.length -1; plyr++) {
-							if(match_data.setup.homeSquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
+							if(match_data.setup.homeSquad[plyr].captainWicketKeeper != null && match_data.setup.homeSquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
 								&& match_data.setup.homeSquad[plyr].playerId == this.value) {
 								this.selected = true;
 								return false;
@@ -6162,7 +6138,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						}
 					}else if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.awayTeamId) {
 						for(var plyr = 0; plyr <= match_data.setup.awaySquad.length -1; plyr++) {
-							if(match_data.setup.awaySquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
+							if(match_data.setup.awaySquad[plyr].captainWicketKeeper != null && match_data.setup.awaySquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
 								&& match_data.setup.awaySquad[plyr].playerId == this.value) {
 								this.selected = true;
 								return false;
@@ -6193,7 +6169,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
 					    option.text = bc.player.ticker_name;
-					    if(bc.onStrike.toLowerCase() == 'yes') {
+					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
 					    select.appendChild(option);
@@ -6388,7 +6364,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
 					    option.text = bc.player.ticker_name;
-					    if(bc.onStrike.toLowerCase() == 'yes') {
+					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
 					    select.appendChild(option);
@@ -6420,7 +6396,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
 				    option.text = bc.player.ticker_name;
-					if(bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
+					if(bc.player.captainWicketKeeper != null && bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						option.selected = true;
 					}
 				    select.appendChild(option);
@@ -6487,7 +6463,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				$('#' + select.id + ' > option').each(function() {
 					if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.homeTeamId) {
 						for(var plyr = 0; plyr <= match_data.setup.homeSquad.length-1; plyr++) {
-							if(match_data.setup.homeSquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
+							if(match_data.setup.homeSquad[plyr].captainWicketKeeper != null && match_data.setup.homeSquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
 								&& match_data.setup.homeSquad[plyr].playerId == this.value) {
 								this.selected = true;
 								return false;
@@ -6495,7 +6471,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						}
 					}else if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.awayTeamId) {
 						for(var plyr = 0; plyr <= match_data.setup.awaySquad.length-1; plyr++) {
-							if(match_data.setup.awaySquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
+							if(match_data.setup.awaySquad[plyr].captainWicketKeeper != null && match_data.setup.awaySquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
 								&& match_data.setup.awaySquad[plyr].playerId == this.value) {
 								this.selected = true;
 								return false;
@@ -6526,7 +6502,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
 					    option.text = bc.player.ticker_name;
-					    if(bc.onStrike.toLowerCase() == 'yes') {
+					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
 					    select.appendChild(option);
@@ -7078,50 +7054,50 @@ function addItemsToList(whatToProcess, dataToProcess)
 					
 					tbody = document.createElement('tbody');
 					
-					inns_item.battingCard.sort((a,b) => (a.batterPosition > b.batterPosition) ? 1 : ((b.batterPosition > a.batterPosition) ? -1 : 0));
-					
-					inns_item.battingCard.forEach(function(bat_tm_item,index,arr){
-						
-						 if((bat_tm_item.status != null && bat_tm_item.status.toLowerCase() != 'stilltobat') 
-								|| (bat_tm_item.howOut != null && bat_tm_item.howOut.trim() != '')) {
+					if(inns_item.battingCard != null) {
+						inns_item.battingCard.sort((a,b) => (a.batterPosition > b.batterPosition) ? 1 : ((b.batterPosition > a.batterPosition) ? -1 : 0));
+						inns_item.battingCard.forEach(function(bat_tm_item,index,arr){
+							
+							 if((bat_tm_item.status != null && bat_tm_item.status.toLowerCase() != 'stilltobat') 
+									|| (bat_tm_item.howOut != null && bat_tm_item.howOut.trim() != '')) {
+										
+								  row = tbody.insertRow(tbody.rows.length);
 									
-							  row = tbody.insertRow(tbody.rows.length);
-								
-							  cell = row.insertCell(0);
-							  cell.innerHTML = bat_tm_item.batterPosition + '. ' + bat_tm_item.player.ticker_name;
-							  cell.title = bat_tm_item.player.full_name;
-							  
-							  cell = row.insertCell(1);
-							  if(bat_tm_item.status.replace('_', ' ').toLowerCase() == 'not out') {
-								  cell.innerHTML = 'Not Out';
-							  } else if(bat_tm_item.status.toLowerCase() == 'still_to_bat') {
-							    cell.innerHTML = 'Did Not Bat';
-							  } else if(bat_tm_item.howOut.toLowerCase() == 'retired_hurt') {
-								  cell.innerHTML = 'retired hurt';
-							  } else if(bat_tm_item.howOut.toLowerCase() == 'absent_hurt') {
-								  cell.innerHTML = 'absent hurt';
-							  } else {
-								  cell.innerHTML = bat_tm_item.howOutText;
+								  cell = row.insertCell(0);
+								  cell.innerHTML = bat_tm_item.batterPosition + '. ' + bat_tm_item.player.ticker_name;
+								  cell.title = bat_tm_item.player.full_name;
+								  
+								  cell = row.insertCell(1);
+								  if(bat_tm_item.status.replace('_', ' ').toLowerCase() == 'not out') {
+									  cell.innerHTML = 'Not Out';
+								  } else if(bat_tm_item.status.toLowerCase() == 'still_to_bat') {
+								    cell.innerHTML = 'Did Not Bat';
+								  } else if(bat_tm_item.howOut.toLowerCase() == 'retired_hurt') {
+									  cell.innerHTML = 'retired hurt';
+								  } else if(bat_tm_item.howOut.toLowerCase() == 'absent_hurt') {
+									  cell.innerHTML = 'absent hurt';
+								  } else {
+									  cell.innerHTML = bat_tm_item.howOutText;
+								  }
+
+								  cell = row.insertCell(2);
+								  cell.innerHTML = bat_tm_item.runs;
+								  cell = row.insertCell(3);
+								  cell.innerHTML = bat_tm_item.balls + ' (' 
+								  	+ secondsTimeSpanToMinutesAndSeconds(bat_tm_item.duration) + ')';
+								  cell = row.insertCell(4);
+								  if(match_data.setup.specialMatchRules != null && match_data.setup.specialMatchRules == 'ISPL'){
+									  cell.innerHTML = bat_tm_item.fours + '/' + bat_tm_item.sixes + '/' + bat_tm_item.nines;
+								  } else {
+									  cell.innerHTML = bat_tm_item.fours + '/' + bat_tm_item.sixes;
+								  }
+								  if(bat_tm_item.onStrike != null && bat_tm_item.onStrike.toLowerCase() == 'yes') {
+									$(row).find('td').css({color: 'white','background-color': 'brown'});
+								  } 
 							  }
 
-							  cell = row.insertCell(2);
-							  cell.innerHTML = bat_tm_item.runs;
-							  cell = row.insertCell(3);
-							  cell.innerHTML = bat_tm_item.balls + ' (' 
-							  	+ secondsTimeSpanToMinutesAndSeconds(bat_tm_item.duration) + ')';
-							  cell = row.insertCell(4);
-							  if(match_data.setup.specialMatchRules != null && match_data.setup.specialMatchRules == 'ISPL'){
-								  cell.innerHTML = bat_tm_item.fours + '/' + bat_tm_item.sixes + '/' + bat_tm_item.nines;
-							  } else {
-								  cell.innerHTML = bat_tm_item.fours + '/' + bat_tm_item.sixes;
-							  }
-							  
-							  if(bat_tm_item.onStrike != null && bat_tm_item.onStrike.toLowerCase() == 'yes') {
-								$(row).find('td').css({color: 'white','background-color': 'brown'});
-							  } 
-						  }
-
-					});
+						});
+					}
 
 				    row = tbody.insertRow(tbody.rows.length);
 					cell = row.insertCell(0);
@@ -7448,7 +7424,26 @@ function removeSelectDuplicates(selectAttrToUse,selectNameId)
 	    }
 	});
 }
-function findSelectDuplicates(selectAttrToUse,selectNameId)
+function findSelectDuplicatesByClass(className) {
+    var selectedValues = {};
+    var duplicates = [];
+
+    $("select." + className + " option:selected").each(function () {
+        var val = $(this).val();
+        var text = $(this).text();
+
+        if (val !== "") {
+            if (selectedValues[val]) {
+                duplicates.push(text);
+            } else {
+                selectedValues[val] = true;
+            }
+        }
+    });
+
+    return [...new Set(duplicates)].toString();
+}
+/*function findSelectDuplicates(selectAttrToUse,selectNameId)
 {
 	var duplicatesTxt = [], selectedValue = '';
 	$("select[" + selectAttrToUse + "='" + selectNameId + "'] > option:selected").each(function () {
@@ -7460,7 +7455,7 @@ function findSelectDuplicates(selectAttrToUse,selectNameId)
 	   });	
 	});	
 	return duplicatesTxt.filter(function(elem, index, self) {return index === self.indexOf(elem);}).toString();
-}
+}*/
 function removeDuplicateOptions(selectId) {
   const select = document.getElementById(selectId);
   const seenValues = new Set();

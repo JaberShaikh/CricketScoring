@@ -86,7 +86,6 @@ public class IndexController
 		}));
 		model.addAttribute("teams", cricketService.getTeams());
 		model.addAttribute("grounds", cricketService.getGrounds());
-		model.addAttribute("seasons", cricketService.getSeasons());
 		model.addAttribute("licence_expiry_message",
 			"Software licence expires on " + new SimpleDateFormat("E, dd MMM yyyy").format(
 			new SimpleDateFormat("yyyy-MM-dd").parse(expiry_date)));
@@ -157,13 +156,13 @@ public class IndexController
 	}
 	
 	@RequestMapping(value = {"/upload_match_setup_data", "/reset_and_upload_match_setup_data", 
-		"/upload_shot_data", "/upload_wagon_data"}, method={RequestMethod.POST})    
+		"/upload_shot_data", "/upload_wagon_data"}, method={RequestMethod.POST, RequestMethod.GET})    
 	public @ResponseBody String uploadFormDataToSessionObjects(HttpServletRequest request) // (MultipartHttpServletRequest request) 
 		throws IllegalAccessException, InvocationTargetException, IOException, URISyntaxException, JAXBException
 	{
    		boolean reset_all_variables = false;
-		if (request.getRequestURI().contains("upload_match_setup_data") 
-				|| request.getRequestURI().contains("reset_and_upload_match_setup_data")) {
+   		
+		if (request.getRequestURI().contains("upload_match_setup_data") || request.getRequestURI().contains("reset_and_upload_match_setup_data")) {
 			
 			List<Player> home_squad = new ArrayList<Player>(); List<Player> away_squad = new ArrayList<Player>();
 			List<Player> home_substitutes = new ArrayList<Player>(); List<Player> away_substitutes = new ArrayList<Player>();
@@ -212,11 +211,17 @@ public class IndexController
 		   				inns.add(new Inning());
 				}
 			}
+
+			BeanWrapperImpl matchWrapper = new BeanWrapperImpl(session_match.getMatch());
+	   		BeanWrapperImpl setupWrapper = new BeanWrapperImpl(session_match.getSetup());
 			
 			session_match.getSetup().setMatchDataUpdate(CricketUtil.START);
-			
 			for (Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-	   			if(entry.getKey().contains("_")) {
+				if (entry.getValue()[0] == null || entry.getValue()[0].trim().isEmpty() || entry.getValue()[0].equalsIgnoreCase("undefined")) {
+					continue;
+				}
+				if(entry.getKey().toUpperCase().startsWith(CricketUtil.HOME + CricketUtil.PLAYER + "_") 
+					|| entry.getKey().toUpperCase().startsWith(CricketUtil.AWAY + CricketUtil.PLAYER + "_")) {
    					if(entry.getKey().split("_")[0].equalsIgnoreCase(CricketUtil.HOME + CricketUtil.PLAYER)) {
 						setupHomeTeam.add(entry.getKey().split("_")[1] + "|" + Integer.parseInt(entry.getValue()[0]));
    						switch (Integer.parseInt(entry.getKey().split("_")[1])) {
@@ -246,14 +251,15 @@ public class IndexController
    					}
    					
 	   			} else if (entry.getKey().toUpperCase().contains("MATCHFILENAME")) {
-	   				new BeanWrapperImpl(session_match.getMatch()).setPropertyValue(entry.getKey(), 
-	   					entry.getValue()[0].substring(0, entry.getValue()[0].indexOf('.')) + ".json");
+	   				matchWrapper.setPropertyValue(entry.getKey(), entry.getValue()[0].substring(0, entry.getValue()[0].indexOf('.')) + ".json");
 	   			} else {
-	   				new BeanWrapperImpl(session_match.getSetup()).setPropertyValue(entry.getKey(), entry.getValue()[0]);
+	   				if(setupWrapper.isWritableProperty(entry.getKey())) {
+	   					setupWrapper.setPropertyValue(entry.getKey(), entry.getValue()[0]);
+	   				}
 	   			}
 	   		}
 			for (Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-	   			if(entry.getKey().contains("_")) {
+	   			if(entry.getKey().toUpperCase().contains(CricketUtil.HOME + CricketUtil.CAPTAIN + "_") || entry.getKey().toUpperCase().contains(CricketUtil.AWAY + CricketUtil.CAPTAIN + "_")) {
 	   				if(entry.getKey().split("_")[0].equalsIgnoreCase(CricketUtil.HOME + CricketUtil.CAPTAIN + CricketUtil.WICKET_KEEPER.replace("_", ""))) {
 	   					for(Player plyr:home_squad) {
 	   						if(plyr.getPlayerPosition() == Integer.parseInt(entry.getKey().split("_")[1])) {
@@ -326,11 +332,19 @@ public class IndexController
 		   		} else if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.SUPER_OVER)) {
 		   			session_match.getSetup().setMaxOvers(Integer.valueOf(CricketUtil.ONE));
 		   		}
-		   		if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.TEST) || 
-		   			session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)) {
+
+		   		if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.TEST) 
+		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)) {
 		   			max_inns = CricketUtil.TEST_MATCH_MAXIMUM_INNINGS;
 		   		} else {
 		   			max_inns = CricketUtil.LIMITED_OVER_MAXIMUM_INNINGS;
+		   		}
+		   		while (inns.size() < max_inns) {
+		   		    inns.add(new Inning());
+		   		}		   		
+		   		
+		   		if(!session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.TEST) && 
+		   			!session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)) {
 		   			switch (session_match.getSetup().getMatchType().toUpperCase()) {
 					case CricketUtil.ODI:
 					case CricketUtil.OD:
@@ -374,12 +388,7 @@ public class IndexController
 						break;
 					}
 		   		}
-		   		
 	   			for(int i=1; i<=max_inns; i++) {
-	   				
-	   				if(inns.size() < i) // For test matches add four innings
-	   					inns.add(new Inning());
-	   				
 	   				if(inns.get(i-1).getBattingCard() == null || inns.get(i-1).getBattingCard().size() <= 0) {
 		   				inns.get(i-1).setInningNumber(i);
    			   			switch (i) {
@@ -487,9 +496,10 @@ public class IndexController
 	   				Collections.sort(inn.getBattingCard());
 				}
 		   		if((session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.TEST) 
-		   				|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)) 
-		   				&& inns.size() >= CricketUtil.TEST_MATCH_MAXIMUM_INNINGS) {
-					Inning this_inn;
+		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)) 
+		   			&& inns.size() >= CricketUtil.TEST_MATCH_MAXIMUM_INNINGS) {
+					
+		   			Inning this_inn;
 					if(session_match.getSetup().getFollowOn() != null && session_match.getSetup().getFollowOn().equalsIgnoreCase(CricketUtil.YES)) {
 						if(inns.get(1).getBattingTeamId() != inns.get(2).getBattingTeamId()) { // When 2nd & 3rd innings batting team are NOT the same
 							this_inn = inns.get(2);
@@ -503,8 +513,10 @@ public class IndexController
 							inns.set(3, this_inn); inns.get(3).setInningNumber(4);
 						}
 					}
+					
 	   			}
    				session_match.getMatch().setInning(new ArrayList<Inning>(inns));
+		   		System.out.println("session_match.getMatch().setInning = " + session_match.getMatch().getInning());
 			}
 			
 		} else if(request.getRequestURI().contains("upload_shot_data") || request.getRequestURI().contains("upload_wagon_data")) {
@@ -812,9 +824,6 @@ public class IndexController
 								this_event.setEventBatterNo(bc.getPlayerId());
 								bc.setRuns(bc.getRuns() + Integer.valueOf(valueToProcess.split(",")[4]));
 								this_event.setEventOnStrike(bc.getOnStrike());
-								if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-									session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-								}
 								if(session_match.getMatch().getDaysSessions() != null) {
 									thisDaySession = session_match.getMatch().getDaysSessions().stream().filter(
 										ds -> ds.getIsCurrentSession().equalsIgnoreCase(CricketUtil.YES)).findAny().orElse(null);
@@ -874,7 +883,6 @@ public class IndexController
 									bc.setConcussionPlayerId(Integer.valueOf(valueToProcess.split(",")[5]));
 								}
 								bc.setOnStrike("");
-								session_match.getMatch().setWagonBatsmanStyle("");
 								this_event.setEventHowOutBatterNo(bc.getPlayerId());
 								if(!valueToProcess.split(",")[0].trim().isEmpty()) { // How out text found
 									switch (valueToProcess.split(",")[0].toUpperCase()) {
@@ -949,18 +957,12 @@ public class IndexController
 									switch (valueToProcess.split(",")[4]) {
 									case CricketUtil.DOT: case CricketUtil.TWO: case CricketUtil.FOUR: case CricketUtil.SIX: case CricketUtil.NINE:
 										bc.setOnStrike(CricketUtil.YES);
-										if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-											session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-										}
 										break;
 									}
 								} else {
 									switch (valueToProcess.split(",")[4]) {
 									case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
 										bc.setOnStrike(CricketUtil.YES);
-										if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-											session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-										}
 										break;
 									}
 								}							
@@ -1952,10 +1954,6 @@ public class IndexController
 								bc.setSixes(Integer.valueOf(valueToProcess.split(",")[4]));
 								if(valueToProcess.split(",").length > 5) {
 									bc.setOnStrike(valueToProcess.split(",")[5].toUpperCase());
-									if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()
-										&& bc.getOnStrike().equalsIgnoreCase(CricketUtil.YES)) {
-										session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-									}
 								} else {
 									bc.setOnStrike("");
 								}
@@ -2287,9 +2285,6 @@ public class IndexController
 								for(BattingCard bc:inn.getBattingCard()) {
 									if(this_event.getEventBatterNo() == bc.getPlayerId()) {
 										bc.setOnStrike(CricketUtil.YES);
-										if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-											session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-										}
 									} 
 									else if(this_event.getEventOtherBatterNo() == bc.getPlayerId()) {
 										bc.setOnStrike(CricketUtil.NO);
@@ -2674,9 +2669,6 @@ public class IndexController
 										}
 										if(lastBallOfTheOver == true) {
 											bc.setOnStrike(CricketUtil.YES);
-											if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-												session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-											}
 										}
 									} else if(this_event.getEventOtherBatterNo() == bc.getPlayerId()) {
 										if(lastBallOfTheOver == true) {
@@ -2808,18 +2800,12 @@ public class IndexController
 											switch (String.valueOf(this_event.getEventRuns())) {
 											case CricketUtil.TWO: case CricketUtil.FOUR: case CricketUtil.SIX: case CricketUtil.NINE: 
 												bc.setOnStrike(CricketUtil.YES);
-												if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-													session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-												}
 												break;
 											}
 										} else {
 											switch (String.valueOf(this_event.getEventRuns())) {
 											case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
 												bc.setOnStrike(CricketUtil.YES);
-												if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-													session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-												}
 												break;
 											}
 										}
@@ -3294,10 +3280,6 @@ public class IndexController
 									if(bc.getPlayerId() == this_event.getEventBatterNo()) {
 										bc.setRuns(bc.getRuns() - this_event.getEventRuns());
 										bc.setOnStrike(this_event.getEventOnStrike());
-										if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()
-											&& bc.getOnStrike().equalsIgnoreCase(CricketUtil.YES)) {
-											session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-										}
 										if(session_match.getMatch().getDaysSessions() != null) {
 											thisDaySession = session_match.getMatch().getDaysSessions().stream().filter(
 												ds -> ds.getIsCurrentSession().equalsIgnoreCase(CricketUtil.YES)).findAny().orElse(null);
@@ -3369,18 +3351,12 @@ public class IndexController
 												switch (String.valueOf(this_event.getEventSubExtraRuns())) {
 												case CricketUtil.DOT: case CricketUtil.TWO: case CricketUtil.FOUR: case CricketUtil.SIX: 
 													bc.setOnStrike(CricketUtil.YES);
-													if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-														session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-													}
 													break;
 												}
 											} else {
 												switch (String.valueOf(this_event.getEventSubExtraRuns())) {
 												case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
 													bc.setOnStrike(CricketUtil.YES);
-													if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-														session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-													}
 													break;
 												}
 											}
@@ -3389,18 +3365,12 @@ public class IndexController
 												switch (String.valueOf(this_event.getEventRuns())) {
 												case CricketUtil.DOT: case CricketUtil.TWO: 
 													bc.setOnStrike(CricketUtil.YES);
-													if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-														session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-													}
 													break;
 												}
 											} else {
 												switch (String.valueOf(this_event.getEventRuns())) {
 												case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
 													bc.setOnStrike(CricketUtil.YES);
-													if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-														session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-													}
 													break;
 												}
 											}
@@ -3700,10 +3670,6 @@ public class IndexController
 									if(bc.getPlayerId() == this_event.getEventBatterNo()) {
 										bc.setRuns(bc.getRuns() - this_event.getEventRuns());
 										bc.setOnStrike(this_event.getEventOnStrike());
-										if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()
-											&& bc.getOnStrike().equalsIgnoreCase(CricketUtil.YES)) {
-											session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-										}
 										if(session_match.getMatch().getDaysSessions() != null) {
 											thisDaySession = session_match.getMatch().getDaysSessions().stream().filter(
 												ds -> ds.getIsCurrentSession().equalsIgnoreCase(CricketUtil.YES)).findAny().orElse(null);
@@ -4019,18 +3985,12 @@ public class IndexController
 													switch (String.valueOf(this_event.getEventExtraRuns())) {
 													case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE: 
 														bc.setOnStrike(CricketUtil.YES);
-														if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-															session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-														}
 														break;
 													}
 												} else {
 													switch (String.valueOf(this_event.getEventExtraRuns())) {
 													case CricketUtil.TWO: case CricketUtil.FOUR: case CricketUtil.SIX:
 														bc.setOnStrike(CricketUtil.YES);
-														if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-															session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-														}
 														break;
 													}
 												}
@@ -4114,18 +4074,12 @@ public class IndexController
 														switch (String.valueOf(this_event.getEventRuns())) {
 														case CricketUtil.DOT: case CricketUtil.TWO: 
 															bc.setOnStrike(CricketUtil.YES);
-															if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-																session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-															}
 															break;
 														}
 													} else {
 														switch (String.valueOf(this_event.getEventRuns())) {
 														case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
 															bc.setOnStrike(CricketUtil.YES);
-															if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-																session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-															}
 															break;
 														}
 													}
@@ -4370,18 +4324,12 @@ public class IndexController
 											switch (valueToProcess.split(",")[1].toUpperCase()) {
 											case CricketUtil.TWO: case CricketUtil.FOUR: case CricketUtil.SIX: case CricketUtil.NINE:
 												bc.setOnStrike(CricketUtil.YES);
-												if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-													session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-												}
 												break;
 											}
 										} else {
 											switch (valueToProcess.split(",")[1].toUpperCase()) {
 											case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
 												bc.setOnStrike(CricketUtil.YES);
-												if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-													session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-												}
 												break;
 											}
 										}
@@ -4417,9 +4365,6 @@ public class IndexController
 								
 								if(onStrikeBatsmanFound == false) {
 									this_bc.setOnStrike(CricketUtil.YES);
-									if(this_bc.getPlayer() != null && this_bc.getPlayer().getBattingStyle() != null && !this_bc.getPlayer().getBattingStyle().isEmpty()) {
-										session_match.getMatch().setWagonBatsmanStyle(this_bc.getPlayer().getBattingStyle());
-									}
 								} else {
 									this_bc.setOnStrike(CricketUtil.NO);
 								}
@@ -4478,9 +4423,6 @@ public class IndexController
 										
 										if(onStrikeBatsmanFound == false) {
 											bc.setOnStrike(CricketUtil.YES);
-											if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-												session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-											}
 										} else {
 											bc.setOnStrike(CricketUtil.NO);
 										}
@@ -4913,9 +4855,6 @@ public class IndexController
 										this_event.setEventOtherBatterNo(bc.getPlayerId());
 										if(lastBallOfTheOver == true) {
 											bc.setOnStrike(CricketUtil.YES);
-											if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-												session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-											}
 										}
 									} 
 								 } 
@@ -4939,9 +4878,6 @@ public class IndexController
 										if(onStrikeBatsmanFound == false) {
 											this_event.setEventBatterNo(bc.getPlayerId());
 											bc.setOnStrike(CricketUtil.YES);
-											if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-												session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-											}
 											onStrikeBatsmanFound = true;
 										} else {
 											this_event.setEventOtherBatterNo(bc.getPlayerId());
@@ -4958,9 +4894,6 @@ public class IndexController
 										} else if(bc.getOnStrike() != null && bc.getOnStrike().equalsIgnoreCase(CricketUtil.NO)) {
 											this_event.setEventOtherBatterNo(bc.getPlayerId());
 											bc.setOnStrike(CricketUtil.YES);
-											if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-												session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-											}
 										}
 									}
 								}
@@ -5329,18 +5262,12 @@ public class IndexController
 													switch (valueToProcess.toUpperCase()) {
 													case CricketUtil.DOT: case CricketUtil.TWO:  
 														bc.setOnStrike(CricketUtil.YES);
-														if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-															session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-														}
 														break;
 													}
 												} else {
 													switch (valueToProcess.toUpperCase()) {
 													case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
 														bc.setOnStrike(CricketUtil.YES);
-														if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-															session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-														}
 														break;
 													}
 												}
@@ -5369,17 +5296,11 @@ public class IndexController
 													if(lastBallOfTheOver == true) {
 														if(valueToProcess.contains(CricketUtil.THREE) || valueToProcess.contains(CricketUtil.FIVE)) {
 															bc.setOnStrike(CricketUtil.YES);
-															if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-																session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-															}
 														}
 													} else {
 														if(valueToProcess.contains(CricketUtil.TWO) || valueToProcess.contains(CricketUtil.FOUR)
 															|| valueToProcess.contains(CricketUtil.SIX)) {
 															bc.setOnStrike(CricketUtil.YES);
-															if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-																session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-															}
 														}
 													}
 												}
@@ -6044,18 +5965,12 @@ public class IndexController
 											switch (String.valueOf(total_runs)) {
 											case CricketUtil.TWO: case CricketUtil.FOUR: case CricketUtil.SIX: case CricketUtil.NINE:
 												bc.setOnStrike(CricketUtil.YES);
-												if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-													session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-												}
 												break;
 											}
 										} else {
 											switch (String.valueOf(total_runs)) {
 											case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
 												bc.setOnStrike(CricketUtil.YES);
-												if(bc.getPlayer() != null && bc.getPlayer().getBattingStyle() != null && !bc.getPlayer().getBattingStyle().isEmpty()) {
-													session_match.getMatch().setWagonBatsmanStyle(bc.getPlayer().getBattingStyle());
-												}
 												break;
 											}
 										}
