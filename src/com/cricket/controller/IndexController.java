@@ -70,10 +70,10 @@ public class IndexController
 	public String error_message = "";
 	public Speed session_speed = new Speed();
 	public MatchAllData session_match = new MatchAllData();
-	public Match last_match_data = new Match();
 	public Configuration session_config = new Configuration();
 	public boolean backMatchData = true;
 	public ObjectMapper objectMapper = new ObjectMapper();
+	//public Match last_match_data = new Match();
 
 	@RequestMapping(value = {"/setup"}, method = RequestMethod.POST)
 	public String setupPage(ModelMap model) throws ParseException 
@@ -992,8 +992,8 @@ public class IndexController
 			
 			session_match.getEventFile().setStatus(CricketFunctions.findConsecutiveDupicateEvents(session_match.getEventFile().getEvents(), this_event));
 			session_match.getEventFile().getEvents().add(this_event);
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 			//CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -1120,8 +1120,8 @@ public class IndexController
 
 			session_match.getEventFile().setStatus(CricketFunctions.findConsecutiveDupicateEvents(session_match.getEventFile().getEvents(), this_event));
 			session_match.getEventFile().getEvents().add(this_event);
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 
@@ -1195,8 +1195,8 @@ public class IndexController
 					}
 					session_match.getEventFile().getEvents().remove(this_event);
 					
-					session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-					last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+					session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+					//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 					//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 					CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 					//CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -1254,7 +1254,7 @@ public class IndexController
 				session_match = CricketFunctions.readOrSaveMatchFile(CricketUtil.READ,CricketUtil.MATCH 
 					+ "," + CricketUtil.SETUP + "," + CricketUtil.EVENT,session_match, session_config);
 				
-				last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+				//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 //				switch (whatToProcess.toUpperCase()) {
 //				case CricketUtil.LOAD_MATCH: case "LOAD_BACKUP_MATCH":
 //					CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -1309,8 +1309,8 @@ public class IndexController
 					}
 				}
 			}
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE, CricketUtil.MATCH, session_match, session_config);
 
@@ -1348,8 +1348,8 @@ public class IndexController
 					}
 				}
 				
-				session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS", session_match.getMatch(), timeStatsToProcess,last_match_data));
-				last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+				session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS", session_match.getMatch(), timeStatsToProcess,this_event));
+				//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 				//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 				CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH,session_match, session_config);
 			}
@@ -1361,8 +1361,8 @@ public class IndexController
 			session_match.getSetup().setMatchDataUpdate(valueToProcess);
 			//Update match and events as soon as operator STARTS match update
 			if(valueToProcess != null && valueToProcess.equalsIgnoreCase(CricketUtil.START)) {
-				session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS", session_match.getMatch(), timeStatsToProcess, last_match_data));
-				last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+				session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS", session_match.getMatch(), timeStatsToProcess, this_event));
+				//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 				//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 				CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH + "," + CricketUtil.EVENT 
 					+ "," + CricketUtil.SETUP,session_match, session_config);
@@ -1533,8 +1533,8 @@ public class IndexController
 			session_match.getEventFile().setStatus(CricketFunctions.findConsecutiveDupicateEvents(
 				session_match.getEventFile().getEvents(), this_event));
 			session_match.getEventFile().getEvents().add(this_event);
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.SETUP + "," + CricketUtil.EVENT,session_match, session_config);
 			//CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -1549,8 +1549,8 @@ public class IndexController
 				}
 			}
 
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH,session_match, session_config);
 			//CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -1564,8 +1564,8 @@ public class IndexController
 				valueToProcess.split(",")[3].replace("_", ":"), valueToProcess.split(",")[4].replace("_", ":"), 
 				valueToProcess.split(",")[5].replace("_", ":"), valueToProcess.split(",")[6], valueToProcess.split(",")[7]));
 			
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH,session_match, session_config);
 			//CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -1594,8 +1594,8 @@ public class IndexController
 			}
 			session_match.getSetup().setNumberOfPowerplays(Integer.valueOf(valueToProcess.split(",")[4]));
 			
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE, CricketUtil.SETUP + "," + CricketUtil.MATCH, session_match, session_config);
 			
@@ -1612,8 +1612,8 @@ public class IndexController
 				}else if (valueToProcess.toUpperCase().contains(CricketUtil.BALL_RELEASE)) {
 					session_match.getMatch().setBallRelease(CricketUtil.YES);				
 				}
-				session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-				last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+				session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+				//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 				//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 				CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE, CricketUtil.MATCH,session_match, session_config);
 				
@@ -1640,8 +1640,8 @@ public class IndexController
 								CricketUtil.CRICKET_DIRECTORY + CricketUtil.SPEED_DIRECTORY + session_match.getMatch().getMatchFileName().toLowerCase().replace(".json", ".txt"))));
 						}
 					}
-					session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-					last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+					session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+					//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 					CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE, CricketUtil.MATCH,session_match, session_config);
 				}
 			}
@@ -1655,8 +1655,8 @@ public class IndexController
 					inn.setIsDeclared(valueToProcess.split(",")[1]);
 				}
 			}
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE, CricketUtil.MATCH, session_match, session_config);
 
@@ -1719,8 +1719,8 @@ public class IndexController
 						}
 					}
 				}
-				session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-				last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+				session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+				//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 				//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 				CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH,session_match, session_config);
 			}
@@ -1752,8 +1752,8 @@ public class IndexController
 					}
 				}
 			}
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 
@@ -1825,8 +1825,8 @@ public class IndexController
 					}
 				}
 			}
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 
@@ -2130,8 +2130,8 @@ public class IndexController
 			
 			session_match.getEventFile().setStatus(CricketFunctions.findConsecutiveDupicateEvents(session_match.getEventFile().getEvents(), this_event));
 			session_match.getEventFile().getEvents().add(this_event);
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.SETUP + "," + CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 			//CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -4133,8 +4133,8 @@ public class IndexController
 					}
 				}
 			}
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.SETUP + "," + CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 			//CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -5326,8 +5326,8 @@ public class IndexController
 					}
 				}
 			}
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.SETUP + "," + CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 			//CricketFunctions.getInteractive(session_match, "FULL_WRITE");
@@ -6058,8 +6058,8 @@ public class IndexController
 			
 			session_match.getEventFile().setStatus(CricketFunctions.findConsecutiveDupicateEvents(session_match.getEventFile().getEvents(), this_event));
 			session_match.getEventFile().getEvents().add(this_event);
-			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,last_match_data));
-			last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
+			session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
+			//last_match_data = objectMapper.readValue(objectMapper.writeValueAsString(session_match.getMatch()), Match.class);
 			//CricketFunctions.getInteractive(CricketFunctions.getAllEventsStats(session_match.getMatch(), session_match.getEventFile().getEvents()));
 			CricketFunctions.readOrSaveMatchFile(CricketUtil.WRITE,CricketUtil.SETUP + "," + CricketUtil.MATCH + "," + CricketUtil.EVENT,session_match, session_config);
 			//CricketFunctions.getInteractive(session_match, "FULL_WRITE");

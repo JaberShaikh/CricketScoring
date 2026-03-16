@@ -521,16 +521,14 @@ function processVariousProcesses(whatToProcess,valueToProcess)
 			match_data.match.inning.forEach(function(inn,index,arr){
 				if(inn.isCurrentInning.toLowerCase() == 'yes' && inn.inningStatus.toLowerCase() == 'start') {
 					inn.duration = +inn.duration + +valueToProcess;
-					match_data.timeStats = inn.duration;
+					match_data.match.timeStats = inn.duration;
 					document.getElementById('match_time_hdr').innerHTML = 'Inn: ' 
 						+ secondsTimeSpanToMinutesAndSeconds(inn.duration);
 					if(inn.inningStats) {
-						
 						inn.inningStats.timeSinceLastBoundary = +inn.inningStats.timeSinceLastBoundary + +valueToProcess;
 						inn.inningStats.timeSinceLastRun = +inn.inningStats.timeSinceLastRun + +valueToProcess;
 						inn.inningStats.timeSinceLastRunOffBat = +inn.inningStats.timeSinceLastRunOffBat + +valueToProcess;
-						
-						match_data.timeStats = match_data.timeStats + ',' + inn.inningStats.timeSinceLastBoundary
+						match_data.match.timeStats = match_data.match.timeStats + ',' + inn.inningStats.timeSinceLastBoundary
 							+ ',' + inn.inningStats.timeSinceLastRun + ',' + inn.inningStats.timeSinceLastRunOffBat; 
 						
 						document.getElementById('match_time_hdr').innerHTML = 
@@ -547,7 +545,7 @@ function processVariousProcesses(whatToProcess,valueToProcess)
 									&& bc.status.toLowerCase() == 'not out') 
 								{
 									bc.duration = bc.duration + parseInt(valueToProcess);
-									match_data.timeStats = match_data.timeStats + ',' + bc.playerId + '_' + bc.duration;
+									match_data.match.timeStats = match_data.match.timeStats + ',' + bc.playerId + '_' + bc.duration;
 								}
 							});
 						}
@@ -2207,12 +2205,9 @@ function processCricketProcedures(whatToProcess, whichInput)
 	}
 
 	ajax_data_to_send = 'whatToProcess=' + whatToProcess + '&valueToProcess=' + value_to_process; 
-	if(match_data) {
-		if(match_data.timeStats) {
-			ajax_data_to_send = ajax_data_to_send + '&timeStatsToProcess=' + match_data.timeStats;
-		}
+	if(match_data != null && match_data.match != null && match_data.match.timeStats != null) {
+		ajax_data_to_send = ajax_data_to_send + '&timeStatsToProcess=' + match_data.match.timeStats;
 	}
-
 	//loadingPageProcess('SHOW', 'Processing...');
 
 	$.ajax({    
@@ -2356,8 +2351,8 @@ function processCricketProcedures(whatToProcess, whichInput)
 					if($('#select_match_status option:selected').val() == 'start') {
 					  	inning_timer = setInterval(function(){processVariousProcesses('PROCESS_INNING_DURATION',1)}, 1000);
 					} else if($('#select_match_status option:selected').val() == 'pause') {
-						if(data.timeStats) {
-							document.getElementById('match_time_hdr').innerHTML = data.timeStats
+						if(data.match.timeStats) {
+							document.getElementById('match_time_hdr').innerHTML = data.match.timeStats
 						}
 						clearInterval(inning_timer);
 					}
