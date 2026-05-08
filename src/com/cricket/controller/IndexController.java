@@ -259,7 +259,8 @@ public class IndexController
 	   			}
 	   		}
 			for (Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-	   			if(entry.getKey().toUpperCase().contains(CricketUtil.HOME + CricketUtil.CAPTAIN + "_") || entry.getKey().toUpperCase().contains(CricketUtil.AWAY + CricketUtil.CAPTAIN + "_")) {
+	   			if(entry.getKey().toUpperCase().contains(CricketUtil.HOME + CricketUtil.CAPTAIN + CricketUtil.WICKET_KEEPER.replace("_", "")) 
+	   					|| entry.getKey().toUpperCase().contains(CricketUtil.AWAY + CricketUtil.CAPTAIN + CricketUtil.WICKET_KEEPER.replace("_", ""))) {
 	   				if(entry.getKey().split("_")[0].equalsIgnoreCase(CricketUtil.HOME + CricketUtil.CAPTAIN + CricketUtil.WICKET_KEEPER.replace("_", ""))) {
 	   					for(Player plyr:home_squad) {
 	   						if(plyr.getPlayerPosition() == Integer.parseInt(entry.getKey().split("_")[1])) {
