@@ -112,7 +112,16 @@
 						    <!-- Match Select + Load Button -->
 						    <div class="d-flex flex-column">
 						      <div class="input-group input-group-sm">
-							    <label for="select_cricket_matches" class="form-label mb-0 small">Select Match</label>
+							    <label for="cricketMatchesDirectory" class="form-label mb-0 small me-1">Directory </label>
+						        <select id="cricketMatchesDirectory" name="cricketMatchesDirectory" 
+						        	class="form-select form-select-sm w-auto" style="max-width:220px;" 
+						        	onchange="uploadFormDataToSessionObjects('SAVE_CRICKET_DIRECTORY')">
+						            <option value="" ${empty cricketMatchesDirectory ? 'selected' : ''}></option>
+						            <option value="men" ${cricketMatchesDirectory == 'men' ? 'selected' : ''}>Men</option>
+						            <option value="women" ${cricketMatchesDirectory == 'women' ? 'selected' : ''}>Women</option>
+						        </select>
+
+							    <label for="select_cricket_matches" class="form-label mb-0 small ms-2 me-1">Match </label>
 						        <select id="select_cricket_matches"
 						                name="select_cricket_matches"
 						                class="form-select form-select-sm w-auto"

@@ -2,6 +2,7 @@ package com.cricket.controller;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.xml.bind.JAXBException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -34,6 +36,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cricket.config.DataSourceConfig;
 import com.cricket.model.BattingCard;
 import com.cricket.model.BowlingCard;
 import com.cricket.model.Configuration;
@@ -73,12 +77,14 @@ public class IndexController
 	public Configuration session_config = new Configuration();
 	public boolean backMatchData = true;
 	public ObjectMapper objectMapper = new ObjectMapper();
+	public String masterCricketDirectory = CricketUtil.CRICKET_DIRECTORY;
+	public File directoryFile = new File(CricketUtil.SPORTS_DIRECTORY + "CricketDirectory.txt");
 	//public Match last_match_data = new Match();
 
 	@RequestMapping(value = {"/setup"}, method = RequestMethod.POST)
 	public String setupPage(ModelMap model) throws ParseException 
 	{
-		model.addAttribute("match_files", new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.MATCHES_DIRECTORY).listFiles(new FileFilter() {
+		model.addAttribute("match_files", new File(masterCricketDirectory + CricketUtil.MATCHES_DIRECTORY).listFiles(new FileFilter() {
 			@Override
 		    public boolean accept(File pathname) {
 		        return pathname.isFile();
@@ -94,7 +100,7 @@ public class IndexController
 	}
 
 	@RequestMapping(value = {"/","/match"}, method = {RequestMethod.POST,RequestMethod.GET})
-	public String cricketMatchPage(ModelMap model) 
+	public String cricketMatchPage(ModelMap model)
 		throws MalformedURLException, IOException, ParseException, URISyntaxException  
 	{
 		if(current_date == null || current_date.isEmpty()) {
@@ -116,33 +122,43 @@ public class IndexController
 //	        System.setOut(fileOut);
 //	        System.setErr(fileOut);			
 			
-			model.addAttribute("match_files", new File(CricketUtil.CRICKET_DIRECTORY 
-					+ CricketUtil.MATCHES_DIRECTORY).listFiles(new FileFilter() {
+			if(!directoryFile.exists()) {
+				directoryFile.createNewFile();
+				switchCricketDirectory("");
+			} else {
+				String whichDirectory = Files.readString(directoryFile.toPath());
+				switchCricketDirectory(whichDirectory);
+			}
+			
+			model.addAttribute("match_files", new File(masterCricketDirectory + CricketUtil.MATCHES_DIRECTORY).listFiles(new FileFilter() {
 				@Override
 			    public boolean accept(File pathname) {
 			        return pathname.isFile();
 			    }
 			}));
 			
-			if(new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY).exists() == false) {
-				new File(CricketUtil.CRICKET_DIRECTORY, CricketUtil.BACK_UP_DIRECTORY).mkdirs();
+			if(new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY).exists() == false) {
+				new File(masterCricketDirectory, CricketUtil.BACK_UP_DIRECTORY).mkdirs();
 			}
-			if(new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY + CricketUtil.MATCHES_DIRECTORY).exists() == false) {
-				new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY, CricketUtil.MATCHES_DIRECTORY).mkdirs();
+			if(new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY + CricketUtil.MATCHES_DIRECTORY).exists() == false) {
+				new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY, CricketUtil.MATCHES_DIRECTORY).mkdirs();
 			}
-			if(new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY + CricketUtil.SETUP_DIRECTORY).exists() == false) {
-				new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY, CricketUtil.SETUP_DIRECTORY).mkdirs();
+			if(new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY + CricketUtil.SETUP_DIRECTORY).exists() == false) {
+				new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY, CricketUtil.SETUP_DIRECTORY).mkdirs();
 			}
-			if(new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY + CricketUtil.EVENT_DIRECTORY).exists() == false) {
-				new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY, CricketUtil.EVENT_DIRECTORY).mkdirs();
+			if(new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY + CricketUtil.EVENT_DIRECTORY).exists() == false) {
+				new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY, CricketUtil.EVENT_DIRECTORY).mkdirs();
 			}
-//			if(new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY + CricketUtil.INTERACTIVE_DIRECTORY).exists() == false) {
-//				new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY, CricketUtil.INTERACTIVE_DIRECTORY).mkdirs();
+//			if(new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY + CricketUtil.INTERACTIVE_DIRECTORY).exists() == false) {
+//				new File(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY, CricketUtil.INTERACTIVE_DIRECTORY).mkdirs();
 //			}
 			
 			model.addAttribute("licence_expiry_message",
 				"Software licence expires on " + new SimpleDateFormat("E, dd MMM yyyy").format(
 				new SimpleDateFormat("yyyy-MM-dd").parse(expiry_date)));
+			
+			model.addAttribute("cricketMatchesDirectory", 
+				session_config.getCricketDirectory() == null ? "" : session_config.getCricketDirectory().toLowerCase());			
 			
 			session_match = new MatchAllData();
 			session_match.setMatch(new Match()); 
@@ -155,12 +171,47 @@ public class IndexController
 		}
 	}
 	
+	public void switchCricketDirectory(String whichDirectory)throws IOException
+	{
+		whichDirectory = whichDirectory.trim().toLowerCase();
+		String baseDirectory = CricketUtil.CRICKET_DIRECTORY;
+		if(baseDirectory.endsWith("/") || baseDirectory.endsWith("\\")) {
+			baseDirectory = baseDirectory.substring(0, baseDirectory.length() - 1);
+		}
+		if(whichDirectory.isEmpty()) {
+			masterCricketDirectory = CricketUtil.CRICKET_DIRECTORY;
+			session_config.setCricketDirectory("");
+			DataSourceConfig.switchDatabase("");
+		}
+		else
+		{
+			String formattedDirectory = StringUtils.capitalize(whichDirectory);
+			masterCricketDirectory = baseDirectory + formattedDirectory + "/";
+			session_config.setCricketDirectory(formattedDirectory);
+			DataSourceConfig.switchDatabase(formattedDirectory);
+		}
+		if(!directoryFile.exists()) {
+			directoryFile.createNewFile();
+		}
+		try(FileWriter writer = new FileWriter(directoryFile, false)) {
+			writer.write(whichDirectory);
+		}
+	}
+	
 	@RequestMapping(value = {"/upload_match_setup_data", "/reset_and_upload_match_setup_data", 
-		"/upload_shot_data", "/upload_wagon_data"}, method={RequestMethod.POST, RequestMethod.GET})    
+		"/upload_shot_data", "/upload_wagon_data", "/save_cricket_directory"}, method={RequestMethod.POST, RequestMethod.GET})    
 	public @ResponseBody String uploadFormDataToSessionObjects(HttpServletRequest request) // (MultipartHttpServletRequest request) 
 		throws IllegalAccessException, InvocationTargetException, IOException, URISyntaxException, JAXBException
 	{
-   		boolean reset_all_variables = false;
+		if (request.getRequestURI().contains("save_cricket_directory")) {
+			String formatData = request.getParameter("formatData");
+			if(formatData != null) {
+				switchCricketDirectory(formatData);
+			}
+			return "";
+		}
+		
+		boolean reset_all_variables = false;
    		
 		if (request.getRequestURI().contains("upload_match_setup_data") || request.getRequestURI().contains("reset_and_upload_match_setup_data")) {
 			
@@ -1232,13 +1283,13 @@ public class IndexController
 
 			switch (whatToProcess.toUpperCase()) {
 			case "LOAD_BACKUP_MATCH": 
-				Files.copy(Paths.get(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY 
+				Files.copy(Paths.get(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY 
 					+ CricketUtil.MATCHES_DIRECTORY + session_match.getMatch().getMatchFileName()), 
-					Paths.get(CricketUtil.CRICKET_DIRECTORY + CricketUtil.MATCHES_DIRECTORY 
+					Paths.get(masterCricketDirectory + CricketUtil.MATCHES_DIRECTORY 
 					+ session_match.getMatch().getMatchFileName()), StandardCopyOption.REPLACE_EXISTING);
-				Files.copy(Paths.get(CricketUtil.CRICKET_DIRECTORY + CricketUtil.BACK_UP_DIRECTORY 
+				Files.copy(Paths.get(masterCricketDirectory + CricketUtil.BACK_UP_DIRECTORY 
 					+ CricketUtil.EVENT_DIRECTORY + session_match.getMatch().getMatchFileName()), 
-					Paths.get(CricketUtil.CRICKET_DIRECTORY + CricketUtil.EVENT_DIRECTORY 
+					Paths.get(masterCricketDirectory + CricketUtil.EVENT_DIRECTORY 
 					+ session_match.getMatch().getMatchFileName()), StandardCopyOption.REPLACE_EXISTING);
 				backMatchData = true;
 				Thread.sleep(5000);
@@ -1632,13 +1683,13 @@ public class IndexController
 			} 
 			else if(valueToProcess.toUpperCase().contains("UPDATE_BOWLERS_SPEEDS")) 
 			{
-				if(new File(CricketUtil.CRICKET_DIRECTORY + CricketUtil.SPEED_DIRECTORY 
+				if(new File(masterCricketDirectory + CricketUtil.SPEED_DIRECTORY 
 					+ session_match.getMatch().getMatchFileName().toLowerCase().replace(".json", ".txt")).exists()) {
 					
 					for (Inning inn : session_match.getMatch().getInning()) {
 						if(inn.getIsCurrentInning() != null && inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)) {
 							inn.setBowlingCard(CricketFunctions.MergeMissingSpeeds(inn.getInningNumber(), inn.getBowlingCard(), CricketFunctions.ReadBallSpeedData(
-								CricketUtil.CRICKET_DIRECTORY + CricketUtil.SPEED_DIRECTORY + session_match.getMatch().getMatchFileName().toLowerCase().replace(".json", ".txt"))));
+								masterCricketDirectory + CricketUtil.SPEED_DIRECTORY + session_match.getMatch().getMatchFileName().toLowerCase().replace(".json", ".txt"))));
 						}
 					}
 					session_match.setMatch(CricketFunctions.processInningTimeData("PROCESS_TIME_STATS",session_match.getMatch(), timeStatsToProcess,this_event));
