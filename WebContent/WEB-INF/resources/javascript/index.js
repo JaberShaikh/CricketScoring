@@ -107,11 +107,22 @@ function handleClick(e) {
   if (wagonDataEl) wagonDataEl.value = wagonSector(xPerc,yPerc) + ',' + xPerc.toFixed(0) + ',' + yPerc.toFixed(0);
 
   lastClickPerc = { xPerc: xPerc, yPerc: yPerc };
-  lastSector = (typeof sector === 'number' ? sector : null);
+  lastSector = sector;
+  //lastSector = (typeof sector === 'number' ? sector : null);
 
   drawBackground();
 }
 function wagonSector(xPerc, yPerc) {
+  const dx = xPerc - 50;
+  const dy = yPerc - 50;
+  let angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+  if (angleDeg < 0) {
+    angleDeg += 360;
+  }
+  angleDeg = (angleDeg + 90) % 360;
+  return Math.floor(angleDeg / 60) + 1;
+}
+/*function wagonSector(xPerc, yPerc) {
   // center-relative coordinates (-50..+50)
   const dx = xPerc - 50;
   const dy = yPerc - 50;
@@ -127,7 +138,7 @@ function wagonSector(xPerc, yPerc) {
   // each sector is 60°. sector 1 => [0,60), sector 2 => [60,120), ... sector 6 => [300,360)
   const sector = Math.floor(angleDeg / 60) + 1;
   return sector; // 1..6
-}
+}*/
 function highlightSector(sector) {
   if (!ctx || !canvas) return;
   var cx = canvas.width / 2;
