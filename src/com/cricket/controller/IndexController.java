@@ -518,6 +518,13 @@ public class IndexController
 			   						inns.get(i-1).getBattingCard().add(this_batting_card);
 			   					}
 	   						}
+	   						for(Player plyr : session_match.getSetup().getHomeOtherSquad()) {
+	   							this_batting_card = battingCardList.stream().filter(
+	   								bc -> bc.getPlayerId() == plyr.getPlayerId()).findAny().orElse(null);
+			   					if(this_batting_card != null) {
+			   						inns.get(i-1).getBattingCard().add(this_batting_card);
+			   					}
+	   						}
 		   				} else if(inns.get(i-1).getBattingTeamId() == session_match.getSetup().getAwayTeamId()) {
 	   						for(Player plyr : session_match.getSetup().getAwaySquad()) {
 	   							this_batting_card = battingCardList.stream().filter(
@@ -530,6 +537,13 @@ public class IndexController
 			   					}
 	   						}
 	   						for(Player plyr : session_match.getSetup().getAwaySubstitutes()) {
+	   							this_batting_card = battingCardList.stream().filter(
+	   								bc -> bc.getPlayerId() == plyr.getPlayerId()).findAny().orElse(null);
+			   					if(this_batting_card != null) {
+			   						inns.get(i-1).getBattingCard().add(this_batting_card);
+			   					}
+	   						}
+	   						for(Player plyr : session_match.getSetup().getAwayOtherSquad()) {
 	   							this_batting_card = battingCardList.stream().filter(
 	   								bc -> bc.getPlayerId() == plyr.getPlayerId()).findAny().orElse(null);
 			   					if(this_batting_card != null) {

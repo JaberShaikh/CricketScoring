@@ -319,7 +319,7 @@ function initialiseForm(whatToProcess, dataToProcess)
 	case 'SETUP':
 		
 		if(dataToProcess) {
-			document.getElementById('specialMatchRules').value = dataToProcess.setup.specialMatchRules;
+			document.getElementById('specialMatchRules').value = dataToProcess.setup.specialMatchRules || '';
 			document.getElementById('matchFileName').value = dataToProcess.match.matchFileName;
 			document.getElementById('tournament').value = dataToProcess.setup.tournament;
 			document.getElementById('matchIdent').value = dataToProcess.setup.matchIdent;
@@ -332,18 +332,18 @@ function initialiseForm(whatToProcess, dataToProcess)
 			document.getElementById('wagonYOffSet').value = dataToProcess.setup.wagonYOffSet;*/
 			document.getElementById('targetRuns').value = dataToProcess.setup.targetRuns;
 			document.getElementById('targetType').value = dataToProcess.setup.targetType;
-			document.getElementById('targetOvers').value = dataToProcess.setup.targetOvers;
-			document.getElementById('reducedOvers').value = dataToProcess.setup.reducedOvers;
+			document.getElementById('targetOvers').value = dataToProcess.setup.targetOvers || '';
+			document.getElementById('reducedOvers').value = dataToProcess.setup.reducedOvers || '';
 			document.getElementById('secondaryTargetRuns').value = dataToProcess.setup.secondaryTargetRuns;
-			document.getElementById('secondaryTargetOvers').value = dataToProcess.setup.secondaryTargetOvers;
+			document.getElementById('secondaryTargetOvers').value = dataToProcess.setup.secondaryTargetOvers || '';
 			document.getElementById('followOnThreshold').value = dataToProcess.setup.followOnThreshold;
 			document.getElementById('reviewsPerTeam').value = dataToProcess.setup.reviewsPerTeam;
 			document.getElementById('playerGender').value = dataToProcess.setup.playerGender;
 			document.getElementById('generateInteractiveFile').value = dataToProcess.setup.generateInteractiveFile;
 			document.getElementById('ballsPerOver').value = dataToProcess.setup.ballsPerOver;
 			document.getElementById('noBallsRuns').value = dataToProcess.setup.noBallsRuns;
-			document.getElementById('speedFilePath').value = dataToProcess.setup.speedFilePath;
-			document.getElementById('followOn').value = dataToProcess.setup.followOn;
+			document.getElementById('speedFilePath').value = dataToProcess.setup.speedFilePath || '';
+			document.getElementById('followOn').value = dataToProcess.setup.followOn || '';
 			/*document.getElementById('numberOfPowerplays').value = dataToProcess.setup.numberOfPowerplays;
 			dataToProcess.match.inning.forEach(function(inn,index,arr){
 				if(inn.inningNumber == 1) {
