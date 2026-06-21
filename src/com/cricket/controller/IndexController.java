@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
 import com.cricket.config.DataSourceConfig;
 import com.cricket.model.BattingCard;
 import com.cricket.model.BowlingCard;
@@ -1461,14 +1460,16 @@ public class IndexController
 						}
 					}
 				}
+				
+				List<Player> loadedSquad;
 				if (correctTeamLoaded == false) {
 					if(valueToProcess.split(",").length >= 3) {
-						session_match.getSetup().setHomeSquad(cricketService.getPlayers(
-							CricketUtil.GENDER_SPECIFIC_TEAM, valueToProcess.split(",")[0] + "," + valueToProcess.split(",")[2]));
-					}else if(valueToProcess.contains(",")) {
-						session_match.getSetup().setHomeSquad(cricketService.getPlayers(
-							CricketUtil.TEAM, valueToProcess.split(",")[0]));
+						loadedSquad = cricketService.getPlayers(CricketUtil.GENDER_SPECIFIC_TEAM,
+					        valueToProcess.split(",")[0] + "," + valueToProcess.split(",")[2]);
+					}else {
+						loadedSquad = cricketService.getPlayers(CricketUtil.TEAM, valueToProcess.split(",")[0]);
 					}
+					session_match.getSetup().setHomeSquad(CricketFunctions.mergePlayingEleven(session_match.getSetup().getHomeSquad(), loadedSquad));
 				}
 
 				correctTeamLoaded = false;
@@ -1484,12 +1485,12 @@ public class IndexController
 				}
 				if (correctTeamLoaded == false) {
 					if(valueToProcess.split(",").length >= 3) {
-						session_match.getSetup().setAwaySquad(cricketService.getPlayers(
-							CricketUtil.GENDER_SPECIFIC_TEAM, valueToProcess.split(",")[1] + "," + valueToProcess.split(",")[2]));
-					}else if(valueToProcess.contains(",")) {
-						session_match.getSetup().setAwaySquad(cricketService.getPlayers(
-							CricketUtil.TEAM, valueToProcess.split(",")[1]));
+						loadedSquad = cricketService.getPlayers(CricketUtil.GENDER_SPECIFIC_TEAM,
+					        valueToProcess.split(",")[1] + "," + valueToProcess.split(",")[2]);
+					}else {
+						loadedSquad = cricketService.getPlayers(CricketUtil.TEAM, valueToProcess.split(",")[1]);
 					}
+					session_match.getSetup().setAwaySquad(CricketFunctions.mergePlayingEleven(session_match.getSetup().getAwaySquad(), loadedSquad));					
 				}
 			}
 			
