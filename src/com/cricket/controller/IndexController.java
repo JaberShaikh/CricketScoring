@@ -401,24 +401,28 @@ public class IndexController
 					case CricketUtil.OD:
 						session_match.getSetup().setNumberOfPowerplays(3);
 						for(int i=1; i<=max_inns; i++) {
-							inns.get(i-1).setFirstPowerplayStartOver("0.1");
-							inns.get(i-1).setFirstPowerplayEndOver("9.6");
-							inns.get(i-1).setSecondPowerplayStartOver("10.1");
-							inns.get(i-1).setSecondPowerplayEndOver("39.6");
-							inns.get(i-1).setThirdPowerplayStartOver("40.1");
-							inns.get(i-1).setThirdPowerplayEndOver("49.6");
+						    if (inns.get(i-1).getFirstPowerplayStartOver() == null || inns.get(i-1).getFirstPowerplayStartOver().isBlank()) {							
+								inns.get(i-1).setFirstPowerplayStartOver("0.1");
+								inns.get(i-1).setFirstPowerplayEndOver("9.6");
+								inns.get(i-1).setSecondPowerplayStartOver("10.1");
+								inns.get(i-1).setSecondPowerplayEndOver("39.6");
+								inns.get(i-1).setThirdPowerplayStartOver("40.1");
+								inns.get(i-1).setThirdPowerplayEndOver("49.6");
+							}
 						}
 						break;
 					case CricketUtil.IT20:
 					case CricketUtil.DT20:
-						session_match.getSetup().setNumberOfPowerplays(2);
+						session_match.getSetup().setNumberOfPowerplays(1);
 						for(int i=1; i<=max_inns; i++) {
-							inns.get(i-1).setFirstPowerplayStartOver("0.1");
-							inns.get(i-1).setFirstPowerplayEndOver("5.6");
-							inns.get(i-1).setSecondPowerplayStartOver("6.1");
-							inns.get(i-1).setSecondPowerplayEndOver("19.6");
-							inns.get(i-1).setThirdPowerplayStartOver("0.0");
-							inns.get(i-1).setThirdPowerplayEndOver("0.0");
+						    if (inns.get(i-1).getFirstPowerplayStartOver() == null || inns.get(i-1).getFirstPowerplayStartOver().isBlank()) {
+								inns.get(i-1).setFirstPowerplayStartOver("0.1");
+								inns.get(i-1).setFirstPowerplayEndOver("5.6");
+								inns.get(i-1).setSecondPowerplayStartOver("0.0");
+								inns.get(i-1).setSecondPowerplayEndOver("0.0");
+								inns.get(i-1).setThirdPowerplayStartOver("0.0");
+								inns.get(i-1).setThirdPowerplayEndOver("0.0");
+						    }
 						}
 						break;
 					case CricketUtil.D10:
@@ -429,12 +433,20 @@ public class IndexController
 							session_match.getSetup().setNumberOfPowerplays(1);
 						}
 						for(int i=1; i<=max_inns; i++) {
-							inns.get(i-1).setFirstPowerplayStartOver("0.1");
-							inns.get(i-1).setFirstPowerplayEndOver("1.6");
-							inns.get(i-1).setSecondPowerplayStartOver("6.1");
-							inns.get(i-1).setSecondPowerplayEndOver("6.6");
-							inns.get(i-1).setThirdPowerplayStartOver("0.0");
-							inns.get(i-1).setThirdPowerplayEndOver("0.0");
+						    if (inns.get(i-1).getFirstPowerplayStartOver() == null || inns.get(i-1).getFirstPowerplayStartOver().isBlank()) {
+								inns.get(i-1).setFirstPowerplayStartOver("0.1");
+								inns.get(i-1).setFirstPowerplayEndOver("1.6");
+								if(session_match.getSetup().getSpecialMatchRules() != null 
+									&& session_match.getSetup().getSpecialMatchRules().equalsIgnoreCase(CricketUtil.ISPL)) {
+									inns.get(i-1).setSecondPowerplayStartOver("6.1");
+									inns.get(i-1).setSecondPowerplayEndOver("6.6");
+								} else {
+									inns.get(i-1).setSecondPowerplayStartOver("0.0");
+									inns.get(i-1).setSecondPowerplayEndOver("0.0");
+								}
+								inns.get(i-1).setThirdPowerplayStartOver("0.0");
+								inns.get(i-1).setThirdPowerplayEndOver("0.0");
+							}
 						}
 						break;
 					}

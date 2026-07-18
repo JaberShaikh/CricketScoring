@@ -1100,7 +1100,7 @@ function processUserSelection(whichInput, extraData)
 									});
 								}
 								if(spellNo > 0) {
-									if(confirm(bwl_tm_item.player.ticker_name + ' last spell number was ' + spellNo + '. Do you wish to start a new spell?') == true) {
+									if(confirm(bwl_tm_item.player.full_name + ' last spell number was ' + spellNo + '. Do you wish to start a new spell?') == true) {
 										option =  parseInt(spellNo + 1) + ',' + bwl_tm_item.playerId;
 									}													
 								}
@@ -1251,7 +1251,7 @@ function processUserSelection(whichInput, extraData)
 						if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 							option = document.createElement('option');
 							option.value = bc.player.playerId;
-						    option.text = bc.player.ticker_name;
+						    option.text = bc.player.full_name;
 						    if(bc.status.toLowerCase() == 'out') {
 							    option.selected = true;
 						    }
@@ -1273,7 +1273,7 @@ function processUserSelection(whichInput, extraData)
 							match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
 								option = document.createElement('option');
 								option.value = hos.playerId;
-							    option.text = hos.ticker_name;
+							    option.text = hos.full_name;
 							    select.appendChild(option);
 							});
 						}
@@ -1282,7 +1282,7 @@ function processUserSelection(whichInput, extraData)
 							match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
 								option = document.createElement('option');
 								option.value = aos.playerId;
-							    option.text = aos.ticker_name;
+							    option.text = aos.full_name;
 							    select.appendChild(option);
 							});
 						}
@@ -1303,7 +1303,7 @@ function processUserSelection(whichInput, extraData)
 					inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -1326,7 +1326,7 @@ function processUserSelection(whichInput, extraData)
 						if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 							option = document.createElement('option');
 							option.value = bc.player.playerId;
-						    option.text = bc.player.ticker_name;
+						    option.text = bc.player.full_name;
 						    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 							    option.selected = true;
 						    }
@@ -1350,7 +1350,7 @@ function processUserSelection(whichInput, extraData)
 				    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 			    	    if(bc.status.toLowerCase() == 'currentbowler') {
 						    option.selected = true;
 					    }
@@ -1373,7 +1373,7 @@ function processUserSelection(whichInput, extraData)
 				    inn.partnerships.forEach(function(part,part_index,bc_arr){
 						option = document.createElement('option');
 						option.value = part.partnershipNumber;
-					    option.text = part.firstPlayer.ticker_name + '/' + part.secondPlayer.ticker_name;
+					    option.text = part.firstPlayer.full_name + '/' + part.secondPlayer.full_name;
 					    option.selected = true;
 					    select.appendChild(option);
 				    });
@@ -1701,13 +1701,13 @@ function processCricketProcedures(whatToProcess, whichInput)
 					inn.bowlingCard.forEach(function(bc,index,arr){
 						if(bc.status.toLowerCase() == 'currentbowler') {
 							cur_bowler_balls = bc.balls;
-							current_bowler_error = bc.player.ticker_name + ' already in. Option NOT available';
+							current_bowler_error = bc.player.full_name + ' already in. Option NOT available';
 						} else if(bc.status.toLowerCase() == 'lastbowler') {
 							if(whatToProcess == 'CHANGE_BOWLER') {
 								if(bc.playerId == $('#select_change_bowler option:selected').val()) {
-									previous_bowler_repeat_error = bc.player.ticker_name + ' has bowled previous over';
+									previous_bowler_repeat_error = bc.player.full_name + ' has bowled previous over';
 									if(bc.overs >= (match_data.setup.maxOvers / 5)){
-										previous_bowler_repeat_error = bc.player.ticker_name + ' has bowled maximum overs allowed';
+										previous_bowler_repeat_error = bc.player.full_name + ' has bowled maximum overs allowed';
 									}
 								}
 							}
@@ -1718,11 +1718,11 @@ function processCricketProcedures(whatToProcess, whichInput)
 					if(whichInput.id.toLowerCase().includes('new_batsman')) {
 						if(bc.playerId == whichInput.id.split(',')[1]) {
 							if(bc.status.toLowerCase() == 'not out') {
-								new_batsman_error = bc.player.ticker_name + ' is already in';
+								new_batsman_error = bc.player.full_name + ' is already in';
 							} else if(bc.status.toLowerCase() == 'out') {
-								new_batsman_error = bc.player.ticker_name + ' is an OUT batsman';
+								new_batsman_error = bc.player.full_name + ' is an OUT batsman';
 							} else if(bc.status.toLowerCase() != 'stilltobat') {
-								new_batsman_error = bc.player.ticker_name + ' is NOT in STILL TO BAT list';
+								new_batsman_error = bc.player.full_name + ' is NOT in STILL TO BAT list';
 							}
 						}						
 					}						
@@ -2461,7 +2461,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -2482,7 +2482,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.ticker_name;
+				    option.text = bc.player.full_name;
 		    	    if(bc.status.toLowerCase() == 'currentbowler' || bc.status.toLowerCase() == 'lastbowler') {
 					    option.selected = true;
 				    }
@@ -2612,7 +2612,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					inn.partnerships.forEach(function(part,part_index,bc_arr){
 						option = document.createElement('option');
 						option.value = part.partnershipNumber;
-					    option.text = part.firstPlayer.ticker_name + '/' + part.secondPlayer.ticker_name;
+					    option.text = part.firstPlayer.full_name + '/' + part.secondPlayer.full_name;
 					    option.selected = true;
 					    select.appendChild(option);
 					});
@@ -2780,7 +2780,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.ticker_name;
+				    option.text = bc.player.full_name;
 		    	    if(bc.status != null && bc.status.toLowerCase() == 'currentbowler') {
 					    option.selected = true;
 				    }
@@ -2968,7 +2968,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -3101,7 +3101,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.ticker_name;
+				    option.text = bc.player.full_name;
 				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
@@ -3122,14 +3122,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
+					    option.text = hs.full_name;
 					    select.appendChild(option);
 					});
 				}else if(inn.battingTeamId == match_data.setup.awayTeamId) {
 					match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = as.playerId;
-					    option.text = as.ticker_name;
+					    option.text = as.full_name;
 					    select.appendChild(option);
 					});
 				}
@@ -3231,7 +3231,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.ticker_name;
+				    option.text = bc.player.full_name;
 				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
@@ -3251,7 +3251,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.ticker_name;
+				    option.text = bc.player.full_name;
 				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
@@ -3334,7 +3334,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    if(bc.status.toLowerCase() == 'out') {
 						    option.selected = true;
 					    }
@@ -3428,14 +3428,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
-					    option.text = hos.ticker_name;
+					    option.text = hos.full_name;
 					    select.appendChild(option);
 					});
 				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
-					    option.text = hos.ticker_name;
+					    option.text = hos.full_name;
 					    select.appendChild(option);
 					});
 				}
@@ -3451,7 +3451,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					inn.fielders.forEach(function(field,index,arr){
 						option = document.createElement('option');
 						option.value = field.playerId;
-					    option.text = field.ticker_name;
+					    option.text = field.full_name;
 					    if(field.captainWicketKeeper != null && field.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						    option.selected = true;
 					    }
@@ -3462,14 +3462,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeOtherSquad.forEach(function(field,index,arr){
 						option = document.createElement('option');
 						option.value = field.playerId;
-					    option.text = field.ticker_name + ' (SUB)';
+					    option.text = field.full_name + ' (SUB)';
 					    select.appendChild(option);
 					});
 				} else if(inn.bowlingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(field,index,arr){
 						option = document.createElement('option');
 						option.value = field.playerId;
-					    option.text = field.ticker_name + ' (SUB)';
+					    option.text = field.full_name + ' (SUB)';
 					    select.appendChild(option);
 					});
 				}
@@ -3490,7 +3490,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					inn.bowlingCard.forEach(function(bc,index,arr){
 						option = document.createElement('option');
 						option.value = bc.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    select.appendChild(option);
 					});
 				}
@@ -5273,38 +5273,38 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeSquad.forEach(function(hs,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
+					    option.text = hs.full_name;
 					    select.appendChild(option);
 					});
 					match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
+					    option.text = hs.full_name;
 					    select.appendChild(option);
 					});
 					match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
+					    option.text = hs.full_name;
 					    select.appendChild(option);
 					});
 				}else if(inn.battingTeamId == match_data.setup.awayTeamId) {
 					match_data.setup.awaySquad.forEach(function(as,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = as.playerId;
-					    option.text = as.ticker_name;
+					    option.text = as.full_name;
 					    select.appendChild(option);
 					});
 					match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = as.playerId;
-					    option.text = as.ticker_name;
+					    option.text = as.full_name;
 					    select.appendChild(option);
 					});
 					match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = as.playerId;
-					    option.text = as.ticker_name;
+					    option.text = as.full_name;
 					    select.appendChild(option);
 					});
 				}
@@ -5322,7 +5322,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				inn.battingCard.forEach(function(bc,index,arr){
 					option = document.createElement('option');
 					option.value = bc.playerId;
-				    option.text = bc.player.ticker_name;
+				    option.text = bc.player.full_name;
 				    select.appendChild(option);
 				});
 				header_text = document.createElement('label');
@@ -5401,7 +5401,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeSquad.forEach(function(hs,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
+					    option.text = hs.full_name;
 					    if(bc_index == 10) {
 							option.selected = true;
 						}
@@ -5411,7 +5411,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = hs.playerId;
-							option.text = hs.ticker_name;
+							option.text = hs.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -5419,7 +5419,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = hs.playerId;
-							option.text = hs.ticker_name;
+							option.text = hs.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -5427,7 +5427,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.awaySquad.forEach(function(as,as_index,bc_arr){
 						option = document.createElement('option');
 						option.value = as.playerId;
-						option.text = as.ticker_name;
+						option.text = as.full_name;
 					    if(as_index == 10) {
 							option.selected = true;
 						}
@@ -5437,7 +5437,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = as.playerId;
-							option.text = as.ticker_name;
+							option.text = as.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -5445,7 +5445,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = as.playerId;
-							option.text = as.ticker_name;
+							option.text = as.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -5678,7 +5678,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -5700,14 +5700,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
-					    option.text = hos.ticker_name;
+					    option.text = hos.full_name;
 					    select.appendChild(option);
 					});
 				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
-					    option.text = hos.ticker_name;
+					    option.text = hos.full_name;
 					    select.appendChild(option);
 					});
 				}
@@ -5738,7 +5738,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				match_data.match.inning[which_inn].battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.ticker_name;
+				    option.text = bc.player.full_name;
 					if(bc.player.captainWicketKeeper != null && bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						option.selected = true;
 					}
@@ -5748,7 +5748,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeSquad.forEach(function(hs,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
+					    option.text = hs.full_name;
 					    select.appendChild(option);
 					});
 					if(match_data.setup.homeSubstitutes != null) {
@@ -5756,7 +5756,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 							(a, b) => a.playerPosition - b.playerPosition).forEach(function(hs,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = hs.playerId;
-						    option.text = hs.ticker_name;
+						    option.text = hs.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -5764,7 +5764,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = hs.playerId;
-						    option.text = hs.ticker_name;
+						    option.text = hs.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -5772,7 +5772,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.awaySquad.forEach(function(as,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = as.playerId;
-					    option.text = as.ticker_name;
+					    option.text = as.full_name;
 					    select.appendChild(option);
 					});
 					if(match_data.setup.awaySubstitutes != null) {
@@ -5780,7 +5780,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 							(a, b) => a.playerPosition - b.playerPosition).forEach(function(as,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = as.playerId;
-						    option.text = as.ticker_name;
+						    option.text = as.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -5788,7 +5788,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = as.playerId;
-						    option.text = as.ticker_name;
+						    option.text = as.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -5846,7 +5846,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -6012,14 +6012,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
-					    option.text = hos.ticker_name;
+					    option.text = hos.full_name;
 					    select.appendChild(option);
 					});
 				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
 						option = document.createElement('option');
 						option.value = hos.playerId;
-					    option.text = hos.ticker_name;
+					    option.text = hos.full_name;
 					    select.appendChild(option);
 					});
 				}
@@ -6041,7 +6041,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -6073,7 +6073,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				match_data.match.inning[which_inn].battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.ticker_name;
+				    option.text = bc.player.full_name;
 					if(bc.player.captainWicketKeeper != null && bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						option.selected = true;
 					}
@@ -6083,14 +6083,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.homeSquad.forEach(function(hs,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = hs.playerId;
-					    option.text = hs.ticker_name;
+					    option.text = hs.full_name;
 					    select.appendChild(option);
 					});
 					if(match_data.setup.homeSubstitutes != null) {
 						match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = hs.playerId;
-						    option.text = hs.ticker_name;
+						    option.text = hs.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -6098,7 +6098,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = hs.playerId;
-						    option.text = hs.ticker_name;
+						    option.text = hs.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -6106,14 +6106,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.setup.awaySquad.forEach(function(as,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = as.playerId;
-					    option.text = as.ticker_name;
+					    option.text = as.full_name;
 					    select.appendChild(option);
 					});
 					if(match_data.setup.awaySubstitutes != null) {
 						match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = as.playerId;
-						    option.text = as.ticker_name;
+						    option.text = as.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -6121,7 +6121,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
 							option = document.createElement('option');
 							option.value = as.playerId;
-						    option.text = as.ticker_name;
+						    option.text = as.full_name;
 						    select.appendChild(option);
 						});
 					}
@@ -6179,7 +6179,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.ticker_name;
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -6637,7 +6637,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						    	anchor = document.createElement('a');
 						    	anchor.className = 'dropdown-item cricket-item';
 							    anchor.id = option.id + ',' + bt.playerId;
-							    anchor.innerText= bt.ticker_name;
+							    anchor.innerText= bt.full_name;
 							    anchor.setAttribute('onclick','processCricketProcedures("LOG_EVENT",this);');
 							    anchor.style = 'display:block;';
 							    linkDiv.append(anchor);
@@ -6742,7 +6742,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 								  row = tbody.insertRow(tbody.rows.length);
 									
 								  cell = row.insertCell(0);
-								  cell.innerHTML = bat_tm_item.batterPosition + '. ' + bat_tm_item.player.ticker_name;
+								  cell.innerHTML = bat_tm_item.batterPosition + '. ' + bat_tm_item.player.full_name;
 								  cell.title = bat_tm_item.player.full_name;
 								  
 								  cell = row.insertCell(1);
@@ -6932,7 +6932,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 							  row = tbody.insertRow(tbody.rows.length);
 								
 							  cell = row.insertCell(0);
-							  cell.innerHTML = bwl_tm_item.player.ticker_name;
+							  cell.innerHTML = bwl_tm_item.player.full_name;
 							  cell.title = bwl_tm_item.player.full_name;
 
 							  cell = row.insertCell(1);
