@@ -78,7 +78,6 @@ public class IndexController
 	public ObjectMapper objectMapper = new ObjectMapper();
 	public String masterCricketDirectory = CricketUtil.CRICKET_DIRECTORY;
 	public File directoryFile = new File(CricketUtil.SPORTS_DIRECTORY + "CricketDirectory.txt");
-	//public Match last_match_data = new Match();
 
 	@RequestMapping(value = {"/setup"}, method = RequestMethod.POST)
 	public String setupPage(ModelMap model) throws ParseException 
@@ -402,11 +401,11 @@ public class IndexController
 						session_match.getSetup().setNumberOfPowerplays(3);
 						for(int i=1; i<=max_inns; i++) {
 						    if (inns.get(i-1).getFirstPowerplayStartOver() == null || inns.get(i-1).getFirstPowerplayStartOver().isBlank()) {							
-								inns.get(i-1).setFirstPowerplayStartOver("0.1");
+								inns.get(i-1).setFirstPowerplayStartOver("0.0");
 								inns.get(i-1).setFirstPowerplayEndOver("9.6");
-								inns.get(i-1).setSecondPowerplayStartOver("10.1");
+								inns.get(i-1).setSecondPowerplayStartOver("10.0");
 								inns.get(i-1).setSecondPowerplayEndOver("39.6");
-								inns.get(i-1).setThirdPowerplayStartOver("40.1");
+								inns.get(i-1).setThirdPowerplayStartOver("40.0");
 								inns.get(i-1).setThirdPowerplayEndOver("49.6");
 							}
 						}
@@ -416,7 +415,7 @@ public class IndexController
 						session_match.getSetup().setNumberOfPowerplays(1);
 						for(int i=1; i<=max_inns; i++) {
 						    if (inns.get(i-1).getFirstPowerplayStartOver() == null || inns.get(i-1).getFirstPowerplayStartOver().isBlank()) {
-								inns.get(i-1).setFirstPowerplayStartOver("0.1");
+								inns.get(i-1).setFirstPowerplayStartOver("0.0");
 								inns.get(i-1).setFirstPowerplayEndOver("5.6");
 								inns.get(i-1).setSecondPowerplayStartOver("0.0");
 								inns.get(i-1).setSecondPowerplayEndOver("0.0");
@@ -434,11 +433,11 @@ public class IndexController
 						}
 						for(int i=1; i<=max_inns; i++) {
 						    if (inns.get(i-1).getFirstPowerplayStartOver() == null || inns.get(i-1).getFirstPowerplayStartOver().isBlank()) {
-								inns.get(i-1).setFirstPowerplayStartOver("0.1");
+								inns.get(i-1).setFirstPowerplayStartOver("0.0");
 								inns.get(i-1).setFirstPowerplayEndOver("1.6");
 								if(session_match.getSetup().getSpecialMatchRules() != null 
 									&& session_match.getSetup().getSpecialMatchRules().equalsIgnoreCase(CricketUtil.ISPL)) {
-									inns.get(i-1).setSecondPowerplayStartOver("6.1");
+									inns.get(i-1).setSecondPowerplayStartOver("6.0");
 									inns.get(i-1).setSecondPowerplayEndOver("6.6");
 								} else {
 									inns.get(i-1).setSecondPowerplayStartOver("0.0");
