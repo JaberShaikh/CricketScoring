@@ -196,6 +196,19 @@ public class IndexController
 		}
 	}
 	
+	private Event getLastBallEventBeforeEndOver(List<Event> events) {
+	    for (int i = events.size() - 1; i >= 0; i--) {
+	        Event event = events.get(i);
+	        if (event.getEventType() != null && event.getEventType().equalsIgnoreCase(CricketUtil.END_OVER)) {
+	            continue;
+	        }
+	        if (event.getEventBatterNo() > 0) {
+	            return event;
+	        }
+	    }
+	    return null;
+	}	
+	
 	@RequestMapping(value = {"/upload_match_setup_data", "/reset_and_upload_match_setup_data", 
 		"/upload_shot_data", "/upload_wagon_data", "/save_cricket_directory"}, method={RequestMethod.POST, RequestMethod.GET})    
 	public @ResponseBody String uploadFormDataToSessionObjects(HttpServletRequest request) // (MultipartHttpServletRequest request) 
@@ -618,6 +631,11 @@ public class IndexController
 //						+ session_match.getEventFile().getEvents().get(session_match.getEventFile().getEvents().size()-1).getEventExtraRuns()
 //						+ session_match.getEventFile().getEvents().get(session_match.getEventFile().getEvents().size()-1).getEventSubExtraRuns();
 
+					Event lastLegitimateBallEvnt = getLastBallEventBeforeEndOver(session_match.getEventFile().getEvents());
+					if(lastLegitimateBallEvnt == null) {
+						lastLegitimateBallEvnt = session_match.getEventFile().getEvents().get(session_match.getEventFile().getEvents().size()-1);
+					}
+					
 					for (Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
 						for(Inning inn : session_match.getMatch().getInning()) {
 							if(inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)) {
@@ -627,17 +645,15 @@ public class IndexController
 											Integer.parseInt(entry.getValue()[0].split(",")[0]),Integer.parseInt(entry.getValue()[0].split(",")[1]),
 											Integer.parseInt(entry.getValue()[0].split(",")[2]), entry.getValue()[0].split(",")[3], 
 											Integer.parseInt(entry.getValue()[0].split(",")[4]), 
-											session_match.getEventFile().getEvents().get(session_match.getEventFile().getEvents().size()-1).getEventBatterNo(), 
-											session_match.getEventFile().getEvents().get(session_match.getEventFile().getEvents().size()-1).getEventBowlerNo(),
+											lastLegitimateBallEvnt.getEventBatterNo(), 
+											lastLegitimateBallEvnt.getEventBowlerNo(),
 											inn.getTotalRuns(), inn.getInningNumber(), inn.getTotalOvers(), inn.getTotalBalls()));
 									}
 								}
 								if(request.getRequestURI().contains("upload_shot_data")) {
 									if(entry.getKey().contains("shotData")) {
 										session_match.getMatch().getShots().add(new Shot(session_match.getMatch().getShots().size()+1, 
-											entry.getValue()[0].trim(), session_match.getEventFile().getEvents().get(
-											session_match.getEventFile().getEvents().size()-1).getEventBatterNo(), 
-											session_match.getEventFile().getEvents().get(session_match.getEventFile().getEvents().size()-1).getEventBowlerNo(),
+											entry.getValue()[0].trim(), lastLegitimateBallEvnt.getEventBatterNo(), lastLegitimateBallEvnt.getEventBowlerNo(),
 											inn.getTotalRuns(), inn.getInningNumber(), inn.getTotalOvers(), inn.getTotalBalls()));
 									}
 								}
@@ -5008,7 +5024,6 @@ public class IndexController
 									this_event.setEventBallNo(inn.getTotalBalls());
 								}
 							}
-							
 						} else {
 							if(valueToProcess.toUpperCase().contains(CricketUtil.WIDE) 
 								|| valueToProcess.toUpperCase().equalsIgnoreCase(CricketUtil.DOT)
