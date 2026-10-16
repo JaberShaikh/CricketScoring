@@ -1648,6 +1648,9 @@ function processCricketProcedures(whatToProcess, whichInput)
 				if(match_data.setup.specialMatchRules != null && match_data.setup.specialMatchRules == 'ISPL'){
 					value_to_process = value_to_process + ',' + $('#overwrite_batsman_nines').val();
 				}
+				if(match_data.setup.matchType.toUpperCase() == 'HONGKONG_SIXES'){
+					value_to_process = value_to_process + ',' + $('#select_overwrite_batting_card_special_status').val();
+				}
 				value_to_process = value_to_process + ',' + $('#select_overwrite_batsman_stats_inning').val();
 			break;
 		case 'LOG_OVERWRITE_BATSMAN_HOWOUT': 
@@ -1690,8 +1693,10 @@ function processCricketProcedures(whatToProcess, whichInput)
 		
 	case 'LOG_WICKET': case 'LOG_ANY_BALL': case 'LOG_EVENT': case 'CHANGE_BOWLER': // case 'NEW_BATSMAN':
 
-		var not_out_batsmen_count = 0, cur_bowler_balls = 0;
+		var not_out_batsmen_count = 0, cur_bowler_balls = 0, runner_only_present = false;
+		var isHongKongSixes = match_data.setup.matchType != null && match_data.setup.matchType.toUpperCase() == 'HONGKONG_SIXES';
 		var current_bowler_error = '', previous_bowler_repeat_error = '', new_batsman_error = '', error_txt = '';
+		
 		match_data.match.inning.forEach(function(inn,index,arr){
 			if(inn.isCurrentInning.toLowerCase() == 'yes') {
 				if(whichInput.id.toLowerCase().includes('result') && inn.inningNumber == 1) {
@@ -1725,10 +1730,14 @@ function processCricketProcedures(whatToProcess, whichInput)
 								new_batsman_error = bc.player.full_name + ' is NOT in STILL TO BAT list';
 							}
 						}						
-					}						
-					if(bc.status.toLowerCase() == 'not out') {
-						not_out_batsmen_count = not_out_batsmen_count + 1;
-					} 
+					}		
+					if(bc.status != null && bc.status.toLowerCase() == 'not out') {
+					    not_out_batsmen_count = not_out_batsmen_count + 1;
+					}
+					if(isHongKongSixes && bc.status != null && bc.status.toLowerCase() == 'out' 
+						&& bc.specialStatus != null && bc.specialStatus.toLowerCase() == 'runner_only') {
+					    runner_only_present = true;
+					}
 				});
 			}
 		});
@@ -1746,9 +1755,9 @@ function processCricketProcedures(whatToProcess, whichInput)
 				} 
 			}
 			if(!whichInput.id.toLowerCase().includes('end_over') && !whichInput.id.toLowerCase().includes('result')) {
-				if(not_out_batsmen_count != 2) {
-					alert('Two batsmen not in. Please use new batsman option');
-					return false;
+				if(not_out_batsmen_count != 2 && !(isHongKongSixes && not_out_batsmen_count == 1 && runner_only_present)) {
+				    alert('Two batsmen not in. Please use new batsman option');
+				    return false;
 				}
 			}
 		} else if(whichInput.id.toLowerCase().includes('result')) {
@@ -3059,6 +3068,31 @@ function addItemsToList(whatToProcess, dataToProcess)
 								break;
 							}
 						}
+						if(match_data.setup.matchType.toUpperCase() == 'HONGKONG_SIXES') {
+
+							select = document.createElement('select');
+							select.id = 'select_overwrite_batting_card_special_status';
+							option = document.createElement('option');
+							option.value = '';
+							option.text = '';
+							select.appendChild(option);
+							
+							option = document.createElement('option');
+							option.value = 'runner_only';
+							option.text = 'Runner Only';
+							if(bc.specialStatus != null && bc.specialStatus.toLowerCase() == 'runner_only') {
+							    option.selected = true;
+							}
+							select.appendChild(option);
+
+							header_text = document.createElement('label');
+							header_text.innerHTML = 'Runner Only: ';
+							header_text.htmlFor = select.id;
+							document.getElementById('extra_log_event_row_1').insertCell(
+								document.getElementById('extra_log_event_row_1').cells.length).appendChild(header_text).appendChild(select);	
+
+						}
+						
 					}
 				});
 			}
@@ -3222,7 +3256,8 @@ function addItemsToList(whatToProcess, dataToProcess)
 		header_text = document.createElement('label');
 		header_text.innerHTML = 'Choose OVERWRITE inning: ';
 		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(0).appendChild(header_text).appendChild(select);		
+		max_cols = 0;
+		document.getElementById('extra_log_event_row_1').insertCell(max_cols).appendChild(header_text).appendChild(select);		
 		
 		select = document.createElement('select');
 		select.id = 'select_current_battingcard_index';
@@ -3242,7 +3277,8 @@ function addItemsToList(whatToProcess, dataToProcess)
 		header_text = document.createElement('label');
 		header_text.innerHTML = 'Choose CURRENT batsman: ';
 		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(1).appendChild(header_text).appendChild(select);	
+		max_cols = max_cols + 1;
+		document.getElementById('extra_log_event_row_1').insertCell(max_cols).appendChild(header_text).appendChild(select);	
 
 		select = document.createElement('select');
 		select.id = 'select_overwrite_battingcard_index';
@@ -3262,7 +3298,8 @@ function addItemsToList(whatToProcess, dataToProcess)
 		header_text = document.createElement('label');
 		header_text.innerHTML = 'Choose SWAP batsman: ';
 		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(2).appendChild(header_text).appendChild(select);	
+		max_cols = max_cols + 1;
+		document.getElementById('extra_log_event_row_1').insertCell(max_cols).appendChild(header_text).appendChild(select);	
 
 		select = document.createElement('select');
 		select.id = 'select_overwrite_battingcard_delete_batter';
@@ -3278,8 +3315,9 @@ function addItemsToList(whatToProcess, dataToProcess)
 		header_text = document.createElement('label');
 		header_text.innerHTML = 'Delete batter: ';
 		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(3).appendChild(header_text).appendChild(select);	
-
+		max_cols = max_cols + 1;
+		document.getElementById('extra_log_event_row_1').insertCell(max_cols).appendChild(header_text).appendChild(select);	
+		
 		option = document.createElement('input');
 	    option.type = 'button';
 	    option.name = 'log_battingcard_overwrite_btn';
@@ -3301,7 +3339,8 @@ function addItemsToList(whatToProcess, dataToProcess)
 	    div.append(document.createElement('br'));
 	    div.append(option);
 	    
-	    document.getElementById('extra_log_event_row_1').insertCell(4).appendChild(div);
+		max_cols = max_cols + 1;
+	    document.getElementById('extra_log_event_row_1').insertCell(max_cols).appendChild(div);
 		
 		break;
 
@@ -3351,7 +3390,11 @@ function addItemsToList(whatToProcess, dataToProcess)
 	
 		select = document.createElement('select');
 		select.id = 'select_overwrite_batsman_howout';
-		for(var i=0;i<=16;i++) {
+		var limt = 16;
+		if(match_data.setup.matchType.toUpperCase() == 'HONGKONG_SIXES'){
+			limt = 17;
+		}
+		for(var i=0;i<=limt;i++) {
 			option = document.createElement('option');
 			switch (i) {
 			case 0:
@@ -3404,6 +3447,9 @@ function addItemsToList(whatToProcess, dataToProcess)
 				break;
 			case 16:
 			    option.value = 'retired_out';
+				break;
+			case 17:
+			    option.value = 'retired';
 				break;
 			}
 		    option.text = option.value.replace(/(^\w{1})|(\s{1}\w{1})/g, match => match.toUpperCase()).replace('_',' ');
@@ -3931,10 +3977,12 @@ function addItemsToList(whatToProcess, dataToProcess)
 
 			tbody = document.createElement('tbody');
 
-			max_cols = parseInt(10 + parseInt($('#homeSubstitutesNumber option:selected').val()));
-			if(parseInt($('#awaySubstitutesNumber option:selected').val()) > parseInt($('#homeSubstitutesNumber option:selected').val())) {
-				max_cols = parseInt(10 + parseInt($('#awaySubstitutesNumber option:selected').val()));
+			var regularPlayers = $('#matchType').val() === 'HONGKONG_SIXES' ? 6 : 11;
+			max_cols = regularPlayers - 1 + parseInt($('#homeSubstitutesNumber').val());
+			if(parseInt($('#awaySubstitutesNumber').val()) > parseInt($('#homeSubstitutesNumber').val())) {
+			    max_cols = regularPlayers - 1 + parseInt($('#awaySubstitutesNumber').val());
 			}
+
 			current_batter = null;
 			for(var i=0; i <= max_cols; i++) {
 				row = tbody.insertRow(tbody.rows.length);
@@ -4098,7 +4146,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						cell.setAttribute('onclick','processUserSelection(this)');
 						break;
 					case 1: case 2:  
-						if(i <= parseInt(10 + parseInt($('#homeSubstitutesNumber option:selected').val()))) {
+						if(i < regularPlayers + parseInt($('#homeSubstitutesNumber').val())) {
 							row.insertCell(j).appendChild(select);
 							$(select).select2();
 						} else {
@@ -4107,7 +4155,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						removeSelectDuplicates('name', select.name)
 						break;
 					case 4: case 5:  
-						if(i <= parseInt(10 + parseInt($('#awaySubstitutesNumber option:selected').val()))) {
+						if(i < regularPlayers + parseInt($('#awaySubstitutesNumber').val())) {
 							row.insertCell(j).appendChild(select);
 							$(select).select2();
 						} else {
@@ -5602,7 +5650,11 @@ function addItemsToList(whatToProcess, dataToProcess)
 
 		select = document.createElement('select');
 		select.id = 'select_how_out';
-		for(var i=0;i<=16;i++) {
+		var limt = 16;
+		if(match_data.setup.matchType.toUpperCase() == 'HONGKONG_SIXES'){
+			limt = 17;
+		}
+		for(var i=0;i<=limt;i++) {
 			option = document.createElement('option');
 			switch (i) {
 			case 0:
@@ -5655,6 +5707,9 @@ function addItemsToList(whatToProcess, dataToProcess)
 				break;
 			case 16:
 			    option.value = 'retired_out';
+				break;
+			case 17:
+			    option.value = 'retired';
 				break;
 			}
 		    option.text = option.value.replace(/(^\w{1})|(\s{1}\w{1})/g, match => match.toUpperCase()).replaceAll('_',' ');
@@ -5934,7 +5989,11 @@ function addItemsToList(whatToProcess, dataToProcess)
 		select = document.createElement('select');
 		select.id = 'select_how_out';
 			
-		for(var i=0;i<=16;i++) {
+		var limt = 16;
+		if(match_data.setup.matchType.toUpperCase() == 'HONGKONG_SIXES'){
+			limt = 17;
+		}
+		for(var i=0;i<=limt;i++) {
 			option = document.createElement('option');
 			switch (i) {
 			case 0:
@@ -5987,6 +6046,9 @@ function addItemsToList(whatToProcess, dataToProcess)
 				break;
 			case 16:
 			    option.value = 'retired_out';
+				break;
+			case 17:
+			    option.value = 'retired';
 				break;
 			}
 		    option.text = option.value.replace(/(^\w{1})|(\s{1}\w{1})/g, match => match.toUpperCase()).replace('_',' ');
@@ -6743,6 +6805,10 @@ function addItemsToList(whatToProcess, dataToProcess)
 									
 								  cell = row.insertCell(0);
 								  cell.innerHTML = bat_tm_item.batterPosition + '. ' + bat_tm_item.player.full_name;
+								  if(match_data.setup.matchType.toUpperCase() == 'HONGKONG_SIXES' && bat_tm_item.specialStatus != null 
+								  		&& bat_tm_item.specialStatus.toLowerCase() == 'runner_only'){
+								  	cell.innerHTML = cell.innerHTML + ' (R)';
+								  }
 								  cell.title = bat_tm_item.player.full_name;
 								  
 								  cell = row.insertCell(1);
@@ -6752,6 +6818,8 @@ function addItemsToList(whatToProcess, dataToProcess)
 								    cell.innerHTML = 'Did Not Bat';
 								  } else if(bat_tm_item.howOut.toLowerCase() == 'retired_hurt') {
 									  cell.innerHTML = 'retired hurt';
+								  } else if(bat_tm_item.howOut.toLowerCase() == 'retired') {
+								    cell.innerHTML = 'retired';
 								  } else if(bat_tm_item.howOut.toLowerCase() == 'absent_hurt') {
 									  cell.innerHTML = 'absent hurt';
 								  } else {

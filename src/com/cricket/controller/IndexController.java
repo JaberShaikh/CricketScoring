@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.xml.bind.JAXBException;
@@ -389,6 +390,8 @@ public class IndexController
 		   			session_match.getSetup().setMaxOvers(CricketUtil.T20_MAXIMUM_OVERS);
 		   		} else if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.D10)) {
 		   			session_match.getSetup().setMaxOvers(CricketUtil.D10_MAXIMUM_OVERS);
+		   		} else if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.HONGKONG_SIXES)) {
+		   		    session_match.getSetup().setMaxOvers(CricketUtil.HONGKONG_SIXES_MAXIMUM_OVERS);		   			
 		   		} else if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.TEST) || 
 		   			session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)) {
 		   			session_match.getSetup().setMaxOvers(Integer.valueOf(CricketUtil.DOT));
@@ -732,7 +735,8 @@ public class IndexController
 		List<DaySession> thisBatSess = new ArrayList<DaySession>();
 		DaySession thisDaySession = new DaySession();
 		boolean lastBallOfTheOver = false;
-
+		Spell currentSpell = new Spell();
+		
 		switch (whatToProcess.toUpperCase()) {
 		case CricketUtil.LOG_WICKET: 
 
@@ -778,12 +782,16 @@ public class IndexController
 												}
 											}
 										}
-										
-										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-												inn.getSpells().get(i).setWickets(inn.getSpells().get(i).getWickets() + 1);
-											}
-										}
+										currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+											.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+										if(currentSpell != null) {
+											currentSpell.setWickets(currentSpell.getWickets() + 1);
+										}										
+//										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//												inn.getSpells().get(i).setWickets(inn.getSpells().get(i).getWickets() + 1);
+//											}
+//										}
 										if(valueToProcess.split(",")[0].equalsIgnoreCase(CricketUtil.CAUGHT_AND_BOWLED))
 											bc.setCatchAsBowler(bc.getCatchAsBowler() + 1);
 										break;
@@ -803,13 +811,18 @@ public class IndexController
 									}
 									bc.setTotalRunsThisOver(bc.getTotalRunsThisOver() + Integer.valueOf(valueToProcess.split(",")[4]));
 									this_event.setEventRuns(Integer.valueOf(valueToProcess.split(",")[4]));
-									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-											inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(valueToProcess.split(",")[4]));
-										}
-									}
+									currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+										.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+									if(currentSpell != null) {
+										currentSpell.setRuns(currentSpell.getRuns() + Integer.valueOf(valueToProcess.split(",")[4]));
+									}										
+//									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//											inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(valueToProcess.split(",")[4]));
+//										}
+//									}
 									switch (valueToProcess.split(",")[0].toUpperCase()) {
-									case CricketUtil.ABSENT_HURT: case CricketUtil.RETIRED_HURT: case CricketUtil.MANKAD: 
+									case CricketUtil.ABSENT_HURT: case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED: case CricketUtil.MANKAD: 
 									case CricketUtil.RETIRED_OUT: case CricketUtil.TIMED_OUT:
 										break;
 									default:
@@ -843,11 +856,16 @@ public class IndexController
 										} else {
 											inn.setTotalBalls(inn.getTotalBalls() + 1);
 										}
-										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-												inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
-											}
-										}
+										currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+											.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+										if(currentSpell != null) {
+											currentSpell.setBalls(currentSpell.getBalls() + 1);
+										}										
+//										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//												inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
+//											}
+//										}
 										if(session_match.getMatch().getDaysSessions() != null) {
 											for(DaySession ds : session_match.getMatch().getDaysSessions()) {
 												if(ds.getIsCurrentSession().equalsIgnoreCase(CricketUtil.YES)) {
@@ -939,7 +957,7 @@ public class IndexController
 										inn.getPartnerships().get(inn.getPartnerships().size()-1).getSecondBatterRuns() + Integer.valueOf(valueToProcess.split(",")[4]));
 								}
 								switch (valueToProcess.split(",")[0].toUpperCase()) {
-								case CricketUtil.ABSENT_HURT: case CricketUtil.RETIRED_HURT: case CricketUtil.MANKAD: 
+								case CricketUtil.ABSENT_HURT: case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED: case CricketUtil.MANKAD: 
 								case CricketUtil.RETIRED_OUT: case CricketUtil.TIMED_OUT:
 									break;
 								default:
@@ -978,7 +996,7 @@ public class IndexController
 								this_event.setEventHowOutBatterNo(bc.getPlayerId());
 								if(!valueToProcess.split(",")[0].trim().isEmpty()) { // How out text found
 									switch (valueToProcess.split(",")[0].toUpperCase()) {
-									case CricketUtil.RETIRED_HURT: 
+									case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED: 
 										bc.setStatus(CricketUtil.STILL_TO_BAT);
 										break;
 									default:
@@ -1044,20 +1062,20 @@ public class IndexController
 								}
 							} else if(bc.getOnStrike() != null && bc.getOnStrike().equalsIgnoreCase(CricketUtil.NO)) 
 							{
-								this_event.setEventOtherBatterNo(bc.getPlayerId());
-								if(lastBallOfTheOver == true) {
-									switch (valueToProcess.split(",")[4]) {
-									case CricketUtil.DOT: case CricketUtil.TWO: case CricketUtil.FOUR: case CricketUtil.SIX: case CricketUtil.NINE:
-										bc.setOnStrike(CricketUtil.YES);
-										break;
-									}
-								} else {
-									switch (valueToProcess.split(",")[4]) {
-									case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
-										bc.setOnStrike(CricketUtil.YES);
-										break;
-									}
-								}							
+							    this_event.setEventOtherBatterNo(bc.getPlayerId());
+							    if(lastBallOfTheOver == true) {
+							        switch (valueToProcess.split(",")[4]) {
+							        case CricketUtil.DOT: case CricketUtil.TWO: case CricketUtil.FOUR: case CricketUtil.SIX: case CricketUtil.NINE:
+							            if(bc.getStatus() != null && bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)) bc.setOnStrike(CricketUtil.YES);
+							            break;
+							        }
+							    } else {
+							        switch (valueToProcess.split(",")[4]) {
+							        case CricketUtil.ONE: case CricketUtil.THREE: case CricketUtil.FIVE:
+							            if(bc.getStatus() != null && bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)) bc.setOnStrike(CricketUtil.YES);
+							            break;
+							        }
+							    }							
 							}
 						}
 						
@@ -1965,6 +1983,7 @@ public class IndexController
 					case CricketUtil.LOG_OVERWRITE_BATTINGCARD:
 						
 						if(valueToProcess.split(",").length >= 4 && valueToProcess.split(",")[2].equalsIgnoreCase(CricketUtil.YES)) {
+							
 							this_event.setEventBattingCard(inn.getBattingCard().stream().filter(bc -> bc.getPlayerId() 
 								== Integer.valueOf(valueToProcess.split(",")[0])).findFirst().orElse(null));
 							this_event.setEventBatterPosition(IntStream.range(0, inn.getBattingCard().size())
@@ -1993,7 +2012,8 @@ public class IndexController
 					            Collections.swap(inn.getBattingCard(), firstBatter, secondBatter);
 					            this_event.setEventBatterPosition(firstBatter);
 					            this_event.setEventBatterPreviousPosition(secondBatter);
-					        }						    
+					        }
+
 						}
 						this_event.setEventBatterNo(Integer.valueOf(valueToProcess.split(",")[0]));
 						this_event.setEventOtherBatterNo(Integer.valueOf(valueToProcess.split(",")[1]));
@@ -2005,6 +2025,7 @@ public class IndexController
 							.forEach(i -> inn.getBattingCard().get(i).setBatterPosition(i + 1));
 
 						inn.getBattingCard().sort(Comparator.comparingInt(BattingCard::getBatterPosition));
+						
 						break;
 						
 					case CricketUtil.LOG_OVERWRITE_PARTNERSHIPS:
@@ -2060,6 +2081,12 @@ public class IndexController
 									this_event.getEventBattingCard().setNines(Integer.valueOf(valueToProcess.split(",")[7]));
 									bc.setNines(Integer.valueOf(valueToProcess.split(",")[7]));
 								}
+						        if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.HONGKONG_SIXES)) {
+									if(valueToProcess.split(",")[7].equalsIgnoreCase(CricketUtil.RUNNER_ONLY)) {
+										bc.setSpecialStatus(CricketUtil.RUNNER_ONLY);
+										this_event.getEventBattingCard().setSpecialStatus(CricketUtil.RUNNER_ONLY);
+									}
+								}
 							}
 						}
 						break;
@@ -2070,7 +2097,7 @@ public class IndexController
 							if(bc.getPlayerId() == Integer.valueOf(valueToProcess.split(",")[0])) {
 								this_event.setEventBattingCard(objectMapper.readValue(objectMapper.writeValueAsString(bc), BattingCard.class));
 								switch (valueToProcess.split(",")[1].toUpperCase()) {
-								case CricketUtil.RETIRED_HURT:
+								case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED:
 									bc.setStatus(CricketUtil.STILL_TO_BAT);
 									break;
 								default:
@@ -2151,9 +2178,7 @@ public class IndexController
 
 							inn.setTotalNines(Integer.valueOf(valueToProcess.split(",")[7]));
 							this_event.setEventExtraRuns(inn.getTotalNines());
-						
 						}
-
 						this_bwc.setRuns(Integer.valueOf(valueToProcess.split(",")[0]));
 						this_bwc.setWickets(Integer.valueOf(valueToProcess.split(",")[1]));
 						this_bwc.setOvers(Integer.valueOf(valueToProcess.split(",")[2]));
@@ -2248,6 +2273,7 @@ public class IndexController
 		Iterator<BattingCard> bc_itr;
 		DaySession thisDaySession = new DaySession();
 		BattingCard this_bc = new BattingCard();
+		Spell currentSpell = new Spell();
 		
 		switch (whatToProcess.toUpperCase()) {
 		case CricketUtil.LOG_ANY_BALL: case CricketUtil.LOG_WICKET: case CricketUtil.LOG_EVENT:
@@ -2373,20 +2399,19 @@ public class IndexController
 						break;
 						
 					case CricketUtil.SWAP_BATSMAN:
-
-						for(Inning inn:session_match.getMatch().getInning()) {
-							if(this_event.getEventInningNumber() == inn.getInningNumber()) {
-								for(BattingCard bc:inn.getBattingCard()) {
-									if(this_event.getEventBatterNo() == bc.getPlayerId()) {
-										bc.setOnStrike(CricketUtil.YES);
-									} 
-									else if(this_event.getEventOtherBatterNo() == bc.getPlayerId()) {
-										bc.setOnStrike(CricketUtil.NO);
-									} 
-								}
-							}
-						}
-						break;
+					    for(Inning inn:session_match.getMatch().getInning()) {
+					        if(this_event.getEventInningNumber() == inn.getInningNumber()) {
+					            int eventBatterNo = this_event.getEventBatterNo();
+					            int eventOtherBatterNo = this_event.getEventOtherBatterNo();
+					            BattingCard eventBatter = inn.getBattingCard().stream().filter(bc -> bc.getPlayerId() == eventBatterNo && bc.getStatus() != null && bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)).findFirst().orElse(null);
+					            BattingCard eventOtherBatter = inn.getBattingCard().stream().filter(bc -> bc.getPlayerId() == eventOtherBatterNo && bc.getStatus() != null && bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)).findFirst().orElse(null);
+					            if(eventBatter != null && eventOtherBatter != null) {
+					                eventBatter.setOnStrike(CricketUtil.YES);
+					                eventOtherBatter.setOnStrike(CricketUtil.NO);
+					            }
+					        }
+					    }
+					    break;
 					
 					case CricketUtil.LOG_OVERWRITE_TEAM_TOTAL: case CricketUtil.LOG_OVERWRITE_TEAM_EXTRAS: case CricketUtil.LOG_OVERWRITE_BATSMAN_STATS: 
 					case CricketUtil.LOG_OVERWRITE_BOWLER_FIGURES: case CricketUtil.LOG_OVERWRITE_BATSMAN_HOWOUT: case CricketUtil.LOG_OVERWRITE_PARTNERSHIPS:
@@ -2462,6 +2487,11 @@ public class IndexController
 											if(session_match.getSetup().getSpecialMatchRules() != null 
 												&& session_match.getSetup().getSpecialMatchRules().equalsIgnoreCase(CricketUtil.ISPL)) {
 												bc.setNines(this_event.getEventBattingCard().getNines());
+											}
+									        if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.HONGKONG_SIXES)) {
+												if(this_event.getEventBattingCard().getSpecialStatus().equalsIgnoreCase(CricketUtil.RUNNER_ONLY)) {
+													bc.setSpecialStatus("");
+												}
 											}
 										}
 									}
@@ -2639,15 +2669,23 @@ public class IndexController
 													}
 												}
 											}
-										}												
+										}	
+										
 										inn.getPartnerships().get(inn.getPartnerships().size()-1).setTotalRuns(
-												inn.getPartnerships().get(inn.getPartnerships().size()-1).getTotalRuns() - this_event.getEventRuns());
-										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-												inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
-												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventRuns());
-											}
-										}
+											inn.getPartnerships().get(inn.getPartnerships().size()-1).getTotalRuns() - this_event.getEventRuns());
+										
+										currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+											.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+										if(currentSpell != null) {
+											currentSpell.setBalls(currentSpell.getBalls() - 1);
+											currentSpell.setRuns(currentSpell.getRuns() - this_event.getEventRuns());
+										}										
+//										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//												inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
+//												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventRuns());
+//											}
+//										}
 										if(session_match.getMatch().getDaysSessions() != null) {
 											for(DaySession ds : session_match.getMatch().getDaysSessions()) {
 												if(ds.getIsCurrentSession().equalsIgnoreCase(CricketUtil.YES)) {
@@ -2843,11 +2881,17 @@ public class IndexController
 										
 										inn.getPartnerships().get(inn.getPartnerships().size()-1).setTotalRuns(
 											inn.getPartnerships().get(inn.getPartnerships().size()-1).getTotalRuns() - this_event.getEventRuns());
-										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-												inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
-											}
-										}
+
+										currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+											.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+										if(currentSpell != null) {
+											currentSpell.setBalls(currentSpell.getBalls() - 1);
+										}										
+//										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//												inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
+//											}
+//										}
 										if(session_match.getMatch().getDaysSessions() != null) {
 											for(DaySession ds : session_match.getMatch().getDaysSessions()) {
 												if(ds.getIsCurrentSession().equalsIgnoreCase(CricketUtil.YES)) {
@@ -2996,11 +3040,16 @@ public class IndexController
 												}									
 											}
 											bc.setTotalRunsThisOver(this_event.getEventTotalRunsInAnOver());
-											for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-												if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-													inn.getSpells().get(i).setMaidens(inn.getSpells().get(i).getMaidens() - 1);
-												}
-											}
+											currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+												.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+											if(currentSpell != null) {
+												currentSpell.setMaidens(currentSpell.getMaidens() - 1);
+											}										
+//											for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//												if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//													inn.getSpells().get(i).setMaidens(inn.getSpells().get(i).getMaidens() - 1);
+//												}
+//											}
 										}
 									}
 								} 
@@ -3120,12 +3169,16 @@ public class IndexController
 												}
 											}
 										}
-										
-										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventRuns());
-											}
-										}
+										currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+											.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+										if(currentSpell != null) {
+											currentSpell.setRuns(currentSpell.getRuns() - this_event.getEventRuns());
+										}										
+//										for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//											if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventRuns());
+//											}
+//										}
 										if(this_event.getEventExtra() != null) {
 											switch (this_event.getEventExtra().toUpperCase()) {
 											case CricketUtil.WIDE: case CricketUtil.NO_BALL:
@@ -3165,11 +3218,16 @@ public class IndexController
 													inn.setTotalNoBalls(inn.getTotalNoBalls() - 1);
 													break;
 												}
-												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - 1);
-													}
-												}
+												currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+													.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+												if(currentSpell != null) {
+													currentSpell.setRuns(currentSpell.getRuns() - 1);
+												}										
+//												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - 1);
+//													}
+//												}
 												break;
 											}
 										}
@@ -3199,11 +3257,16 @@ public class IndexController
 													inn.setTotalNoBalls(inn.getTotalNoBalls() - this_event.getEventSubExtraRuns());
 													break;
 												}
-												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventSubExtraRuns());
-													}
-												}
+												currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+													.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+												if(currentSpell != null) {
+													currentSpell.setRuns(currentSpell.getRuns() - this_event.getEventSubExtraRuns());
+												}										
+//												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventSubExtraRuns());
+//													}
+//												}
 												break;
 											default:
 												switch (this_event.getEventSubExtra().toUpperCase()) {
@@ -3247,12 +3310,17 @@ public class IndexController
 																	}
 																}
 															}
-														}													
-														for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-															if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-																inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
-															}
-														}
+														}						
+														currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+															.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+														if(currentSpell != null) {
+															currentSpell.setBalls(currentSpell.getBalls() - 1);
+														}										
+//														for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//															if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//																inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
+//															}
+//														}
 														if(session_match.getMatch().getDaysSessions() != null) {
 															for(DaySession ds : session_match.getMatch().getDaysSessions()) {
 																if(ds.getIsCurrentSession().equalsIgnoreCase(CricketUtil.YES)) {
@@ -3327,7 +3395,7 @@ public class IndexController
 										//How out text found so increment part total balls
 										if(!this_event.getEventHowOut().trim().isEmpty()) {
 											switch (this_event.getEventHowOut().toUpperCase()) {
-											case CricketUtil.MANKAD: case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED_OUT: 
+											case CricketUtil.MANKAD: case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED: case CricketUtil.RETIRED_OUT: 
 											case CricketUtil.TIMED_OUT: case CricketUtil.ABSENT_HURT:
 												break;
 											default:
@@ -3622,13 +3690,20 @@ public class IndexController
 														}
 													}
 												}											
+
 												if(this_event.getEventHowOut() != null && this_event.getEventHowOut().equalsIgnoreCase(CricketUtil.CAUGHT_AND_BOWLED))
 													bc.setCatchAsBowler(bc.getCatchAsBowler() - 1);
-												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-														inn.getSpells().get(i).setWickets(inn.getSpells().get(i).getWickets() - 1);
-													}
-												}
+
+												currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+													.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+												if(currentSpell != null) {
+													currentSpell.setWickets(currentSpell.getWickets() - 1);
+												}										
+//												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//														inn.getSpells().get(i).setWickets(inn.getSpells().get(i).getWickets() - 1);
+//													}
+//												}
 												break;
 											}
 											bc.setRuns(bc.getRuns() - this_event.getEventRuns());
@@ -3645,7 +3720,7 @@ public class IndexController
 												}
 											}
 											switch (this_event.getEventHowOut().toUpperCase()) {
-											case CricketUtil.ABSENT_HURT: case CricketUtil.RETIRED_HURT: case CricketUtil.MANKAD: 
+											case CricketUtil.ABSENT_HURT: case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED: case CricketUtil.MANKAD: 
 											case CricketUtil.RETIRED_OUT: case CricketUtil.TIMED_OUT:
 												break;
 											default:
@@ -3676,12 +3751,18 @@ public class IndexController
 														}
 													}
 												}
-												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-														inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
-														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventRuns());
-													}
-												}
+												currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+													.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+												if(currentSpell != null) {
+													currentSpell.setBalls(currentSpell.getBalls() - 1);
+													currentSpell.setRuns(currentSpell.getRuns() - this_event.getEventRuns());
+												}										
+//												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//														inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
+//														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventRuns());
+//													}
+//												}
 												
 												inn.getPartnerships().get(inn.getPartnerships().size()-1).setTotalRuns(
 													inn.getPartnerships().get(inn.getPartnerships().size()-1).getTotalRuns() - this_event.getEventRuns());
@@ -3784,7 +3865,7 @@ public class IndexController
 												inn.getPartnerships().get(inn.getPartnerships().size()-1).getSecondBatterRuns() - this_event.getEventRuns());
 										}
 										switch (this_event.getEventHowOut().toUpperCase()) {
-										case CricketUtil.ABSENT_HURT: case CricketUtil.RETIRED_HURT: case CricketUtil.MANKAD: 
+										case CricketUtil.ABSENT_HURT: case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED: case CricketUtil.MANKAD: 
 										case CricketUtil.RETIRED_OUT: case CricketUtil.TIMED_OUT:											
 											break;
 										default:
@@ -3913,12 +3994,18 @@ public class IndexController
 														}
 													}
 												}
-												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-														inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
-														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventRuns());
-													}
-												}
+												currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+													.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+												if(currentSpell != null) {
+													currentSpell.setBalls(currentSpell.getBalls() - 1);
+													currentSpell.setRuns(currentSpell.getRuns() - this_event.getEventRuns());
+												}										
+//												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//														inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() - 1);
+//														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventRuns());
+//													}
+//												}
 												bc.setEconomyRate(CricketFunctions.generateRunRate(bc.getRuns(),bc.getOvers(),bc.getBalls(),2, session_match));
 												if(session_match.getMatch().getDaysSessions() != null) {
 													for(DaySession ds : session_match.getMatch().getDaysSessions()) {
@@ -4038,15 +4125,24 @@ public class IndexController
 														}
 													}
 												}
-												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-														if(this_event.getEventType().equalsIgnoreCase(CricketUtil.NO_BALL)) {
-															inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - Integer.valueOf(session_match.getSetup().getNoBallsRuns()));
-														} else if(this_event.getEventType().equalsIgnoreCase(CricketUtil.WIDE)) {
-															inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventExtraRuns());
-														} 
-													}
-												}
+												currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+													.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+												if(currentSpell != null) {
+													if(this_event.getEventType().equalsIgnoreCase(CricketUtil.NO_BALL)) {
+														currentSpell.setRuns(currentSpell.getRuns() - Integer.valueOf(session_match.getSetup().getNoBallsRuns()));
+													} else if(this_event.getEventType().equalsIgnoreCase(CricketUtil.WIDE)) {
+														currentSpell.setRuns(currentSpell.getRuns() - this_event.getEventExtraRuns());
+													} 
+												}										
+//												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//														if(this_event.getEventType().equalsIgnoreCase(CricketUtil.NO_BALL)) {
+//															inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - Integer.valueOf(session_match.getSetup().getNoBallsRuns()));
+//														} else if(this_event.getEventType().equalsIgnoreCase(CricketUtil.WIDE)) {
+//															inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() - this_event.getEventExtraRuns());
+//														} 
+//													}
+//												}
 												inn.setRunRate(CricketFunctions.generateRunRate(inn.getTotalRuns(),inn.getTotalOvers(),
 													inn.getTotalBalls(),2, session_match));
 												if(this_event.getEventType().equalsIgnoreCase(CricketUtil.NO_BALL)) {
@@ -4253,7 +4349,8 @@ public class IndexController
 		DaySession thisDaySession = new DaySession();
 		List<DaySession> thisBatSess = new ArrayList<DaySession>();
 		BattingCard this_bc = new BattingCard();
-
+		Spell currentSpell = new Spell();
+		
 		switch (whatToProcess.toUpperCase()) {
 		case CricketUtil.LOG_EVENT:
 			
@@ -4312,11 +4409,16 @@ public class IndexController
 										bc.getSpeeds().add(new Speed(bc.getSpeeds().size() + 1, session_match.getMatch().getCurrent_speed(), 
 											"", bc.getOvers(), bc.getBalls(), inn.getTotalOvers(), inn.getTotalBalls(), inn.getInningNumber()));
 									}
-									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-											inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
-										}
-									}
+									currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+										.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+									if(currentSpell != null) {
+										currentSpell.setBalls(currentSpell.getBalls() + 1);
+									}										
+//									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//											inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
+//										}
+//									}
 									bc.setDots(bc.getDots() + 1);
 									bc.setEconomyRate(CricketFunctions.generateRunRate(bc.getRuns(),bc.getOvers(),bc.getBalls(),2, session_match));
 									inn.setTotalRuns(inn.getTotalRuns() + Integer.valueOf(valueToProcess.split(",")[1]));
@@ -4791,19 +4893,31 @@ public class IndexController
 												}
 											}
 										}
-									}													
-									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-											inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
-											if(valueToProcess.toUpperCase().contains(CricketUtil.FOUR)) {
-												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(CricketUtil.FOUR));
-											} else if(valueToProcess.toUpperCase().contains(CricketUtil.SIX)) {
-												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(CricketUtil.SIX));
-											} else if(valueToProcess.toUpperCase().contains(CricketUtil.NINE)) {
-												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(CricketUtil.NINE));
-											}
+									}						
+									currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+										.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+									if(currentSpell != null) {
+										currentSpell.setBalls(currentSpell.getBalls() + 1);
+										if(valueToProcess.toUpperCase().contains(CricketUtil.FOUR)) {
+											currentSpell.setRuns(currentSpell.getRuns() + Integer.valueOf(CricketUtil.FOUR));
+										} else if(valueToProcess.toUpperCase().contains(CricketUtil.SIX)) {
+											currentSpell.setRuns(currentSpell.getRuns() + Integer.valueOf(CricketUtil.SIX));
+										} else if(valueToProcess.toUpperCase().contains(CricketUtil.NINE)) {
+											currentSpell.setRuns(currentSpell.getRuns() + Integer.valueOf(CricketUtil.NINE));
 										}
-									}
+									}										
+//									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//											inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
+//											if(valueToProcess.toUpperCase().contains(CricketUtil.FOUR)) {
+//												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(CricketUtil.FOUR));
+//											} else if(valueToProcess.toUpperCase().contains(CricketUtil.SIX)) {
+//												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(CricketUtil.SIX));
+//											} else if(valueToProcess.toUpperCase().contains(CricketUtil.NINE)) {
+//												inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(CricketUtil.NINE));
+//											}
+//										}
+//									}
 									bc.setEconomyRate(CricketFunctions.generateRunRate(bc.getRuns(),bc.getOvers(),bc.getBalls(),2, session_match));
 									inn.setRunRate(CricketFunctions.generateRunRate(inn.getTotalRuns(),inn.getTotalOvers(),inn.getTotalBalls(),2, session_match));
 									this_event.setEventOverNo(inn.getTotalOvers());
@@ -4953,46 +5067,26 @@ public class IndexController
 									} 
 								 } 
 							} 
-							
 						} else if(valueToProcess.equalsIgnoreCase(CricketUtil.SWAP_BATSMAN)) {
-							
-							this_event.setEventType(CricketUtil.SWAP_BATSMAN);
-							this_event.setEventInningNumber(inn.getInningNumber());
-							
-							onStrikeBatsmanFound = false;
-							if((inn.getBattingCard().stream().filter(bc -> bc.getStatus() != null 
-									&& bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)
-									&& bc.getOnStrike() != null && bc.getOnStrike().equalsIgnoreCase(CricketUtil.YES)
-									).count() > 1) || (inn.getBattingCard().stream().filter(bc -> bc.getStatus() != null 
-									&& bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)
-									&& bc.getOnStrike() != null && bc.getOnStrike().equalsIgnoreCase(CricketUtil.NO)
-									).count() > 1)) {
-								for(BattingCard bc:inn.getBattingCard()) {
-									if(bc.getStatus() != null && bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)) {
-										if(onStrikeBatsmanFound == false) {
-											this_event.setEventBatterNo(bc.getPlayerId());
-											bc.setOnStrike(CricketUtil.YES);
-											onStrikeBatsmanFound = true;
-										} else {
-											this_event.setEventOtherBatterNo(bc.getPlayerId());
-											bc.setOnStrike(CricketUtil.NO);
-										}
-									}
-								}
-							} else {
-								for(BattingCard bc:inn.getBattingCard()) {
-									if(bc.getStatus() != null && bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)) {
-										if(bc.getOnStrike() != null && bc.getOnStrike().equalsIgnoreCase(CricketUtil.YES)) {
-											this_event.setEventBatterNo(bc.getPlayerId());
-											bc.setOnStrike(CricketUtil.NO);
-										} else if(bc.getOnStrike() != null && bc.getOnStrike().equalsIgnoreCase(CricketUtil.NO)) {
-											this_event.setEventOtherBatterNo(bc.getPlayerId());
-											bc.setOnStrike(CricketUtil.YES);
-										}
-									}
-								}
-							}
-							
+						    this_event.setEventType(CricketUtil.SWAP_BATSMAN);
+						    this_event.setEventInningNumber(inn.getInningNumber());
+						    List<BattingCard> notOutBatsmen = inn.getBattingCard().stream().filter(bc -> bc.getStatus() != null && bc.getStatus().equalsIgnoreCase(CricketUtil.NOT_OUT)).collect(Collectors.toList());
+						    for(BattingCard bc:inn.getBattingCard()) {
+						        if(bc.getHowOut() != null && (bc.getHowOut().equalsIgnoreCase(CricketUtil.RETIRED_HURT) 
+						        		|| bc.getHowOut().equalsIgnoreCase(CricketUtil.RETIRED))) {
+						            bc.setOnStrike(CricketUtil.NO);
+						        }
+						    }
+						    if(notOutBatsmen.size() == 2) {
+						        BattingCard onStrikeBatsman = notOutBatsmen.stream().filter(bc -> bc.getOnStrike() != null && bc.getOnStrike().equalsIgnoreCase(CricketUtil.YES)).findFirst().orElse(null);
+						        BattingCard offStrikeBatsman = notOutBatsmen.stream().filter(bc -> bc.getOnStrike() != null && bc.getOnStrike().equalsIgnoreCase(CricketUtil.NO)).findFirst().orElse(null);
+						        if(onStrikeBatsman != null && offStrikeBatsman != null) {
+						            this_event.setEventBatterNo(offStrikeBatsman.getPlayerId());
+						            this_event.setEventOtherBatterNo(onStrikeBatsman.getPlayerId());
+						            onStrikeBatsman.setOnStrike(CricketUtil.NO);
+						            offStrikeBatsman.setOnStrike(CricketUtil.YES);
+						        }
+						    }
 						} else if(valueToProcess.equalsIgnoreCase(CricketUtil.END_OVER)) {
 
 							this_event.setEventType(valueToProcess);
@@ -5083,13 +5177,19 @@ public class IndexController
 														}
 													}
 												}
-											}									
-											for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-												if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-													inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
-													inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(valueToProcess));
-												}
-											}
+											}				
+											currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+												.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+											if(currentSpell != null) {
+												currentSpell.setBalls(currentSpell.getBalls() + 1);
+												currentSpell.setRuns(currentSpell.getRuns() + Integer.valueOf(valueToProcess));
+											}										
+//											for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//												if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//													inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
+//													inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(valueToProcess));
+//												}
+//											}
 											inn.setTotalRuns(inn.getTotalRuns() + Integer.valueOf(valueToProcess));
 											if(session_match.getSetup().getSpecialMatchRules() != null 
 												&& session_match.getSetup().getSpecialMatchRules().equalsIgnoreCase(CricketUtil.ISPL)) {
@@ -5169,11 +5269,16 @@ public class IndexController
 													}
 												}
 											}		
-											for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-												if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-													inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + 1);
-												}
-											}
+											currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+												.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+											if(currentSpell != null) {
+												currentSpell.setRuns(currentSpell.getRuns() + 1);
+											}										
+//											for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//												if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//													inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + 1);
+//												}
+//											}
 											inn.setTotalExtras(inn.getTotalWides() + inn.getTotalNoBalls() + inn.getTotalByes() 
 												+ inn.getTotalLegByes() + inn.getTotalPenalties());
 											if(session_match.getMatch().getDaysSessions() != null) {
@@ -5233,11 +5338,16 @@ public class IndexController
 														}
 													}
 												}
-												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + this_event.getEventExtraRuns());
-													}
-												}
+												currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+													.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+												if(currentSpell != null) {
+													currentSpell.setRuns(currentSpell.getRuns() + this_event.getEventExtraRuns());
+												}										
+//												for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//													if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//														inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + this_event.getEventExtraRuns());
+//													}
+//												}
 												inn.setTotalExtras(inn.getTotalWides() + inn.getTotalNoBalls() + inn.getTotalByes() 
 													+ inn.getTotalLegByes() + inn.getTotalPenalties());
 												if(session_match.getMatch().getDaysSessions() != null) {
@@ -5435,7 +5545,8 @@ public class IndexController
 		int which_bowler = 0, total_runs = 0;
 		Event this_event = new Event(whatToProcess, valueToProcess);
 		DaySession thisDaySession = new DaySession();
-
+		Spell currentSpell = new Spell();
+		
 		switch (whatToProcess.toUpperCase()) {
 		case CricketUtil.LOG_ANY_BALL: 
 			
@@ -5501,20 +5612,30 @@ public class IndexController
 											}
 										}
 									}
-									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-											inn.getSpells().get(i).setWickets(inn.getSpells().get(i).getWickets() + 1);
-										}
-									}
+									currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+										.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+									if(currentSpell != null) {
+										currentSpell.setWickets(currentSpell.getWickets() + 1);
+									}										
+//									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//											inn.getSpells().get(i).setWickets(inn.getSpells().get(i).getWickets() + 1);
+//										}
+//									}
 									if(valueToProcess.split(",")[1].equalsIgnoreCase(CricketUtil.CAUGHT_AND_BOWLED))
 										bc.setCatchAsBowler(bc.getCatchAsBowler() + 1);
 									break;
 								}
-								for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-									if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-										inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(valueToProcess.split(",")[5]));
-									}
-								}
+								currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+									.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+								if(currentSpell != null) {
+									currentSpell.setRuns(currentSpell.getRuns() + Integer.valueOf(valueToProcess.split(",")[5]));
+								}										
+//								for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//									if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//										inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(valueToProcess.split(",")[5]));
+//									}
+//								}
 								if(Integer.valueOf(valueToProcess.split(",")[5]) > 0)
 									this_event.setEventDescription(this_event.getEventDescription() + "|" + valueToProcess.split(",")[5]);
 								
@@ -5562,11 +5683,16 @@ public class IndexController
 										this_event.setEventDescription(this_event.getEventDescription() + "|nb");
 										break;
 									}
-									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-											inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + 1);
-										}
-									}
+									currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+										.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+									if(currentSpell != null) {
+										currentSpell.setRuns(currentSpell.getRuns() + 1);
+									}										
+//									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//											inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + 1);
+//										}
+//									}
 									break;
 								}
 								
@@ -5615,11 +5741,16 @@ public class IndexController
 										this_event.setEventDescription(this_event.getEventDescription() + "|nb");
 										break;
 									}
-									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-											inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(valueToProcess.split(",")[8]));
-										}
-									}
+									currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+										.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+									if(currentSpell != null) {
+										currentSpell.setRuns(currentSpell.getRuns() + Integer.valueOf(valueToProcess.split(",")[8]));
+									}										
+//									for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//										if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//											inn.getSpells().get(i).setRuns(inn.getSpells().get(i).getRuns() + Integer.valueOf(valueToProcess.split(",")[8]));
+//										}
+//									}
 									break;
 								default:
 									switch (valueToProcess.split(",")[7].toUpperCase()) {
@@ -5669,11 +5800,16 @@ public class IndexController
 													}
 												}
 											}
-											for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
-												if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
-													inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
-												}
-											}
+											currentSpell = inn.getSpells().stream().filter(sp -> sp.getPlayerId() == bc.getPlayerId())
+												.max(Comparator.comparingInt(Spell::getSpellNumber)).orElse(null);
+											if(currentSpell != null) {
+												currentSpell.setBalls(currentSpell.getBalls() + 1);
+											}										
+//											for(int i = inn.getSpells().size() - 1; i >= 0; i--) {
+//												if(inn.getSpells().get(i).getPlayerId() == bc.getPlayerId()) {
+//													inn.getSpells().get(i).setBalls(inn.getSpells().get(i).getBalls() + 1);
+//												}
+//											}
 											if(session_match.getMatch().getDaysSessions() != null) {
 												for(DaySession ds : session_match.getMatch().getDaysSessions()) {
 													if(ds.getIsCurrentSession().equalsIgnoreCase(CricketUtil.YES)) {
@@ -5783,7 +5919,7 @@ public class IndexController
 										//How out text found so increment part total balls
 										if(!valueToProcess.split(",")[1].trim().isEmpty()) {
 											switch (valueToProcess.split(",")[1].toUpperCase()) {
-											case CricketUtil.MANKAD: case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED_OUT: 
+											case CricketUtil.MANKAD: case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED: case CricketUtil.RETIRED_OUT: 
 											case CricketUtil.TIMED_OUT: case CricketUtil.ABSENT_HURT:
 												break;
 											default:
@@ -6078,7 +6214,7 @@ public class IndexController
 									this_event.setEventHowOutBatterNo(bc.getPlayerId());
 									bc.setOnStrike("");
 									switch (valueToProcess.split(",")[1].toUpperCase()) {
-									case CricketUtil.RETIRED_HURT:
+									case CricketUtil.RETIRED_HURT: case CricketUtil.RETIRED:
 										bc.setStatus(CricketUtil.STILL_TO_BAT);
 										break;
 									default:

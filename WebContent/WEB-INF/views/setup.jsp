@@ -52,9 +52,10 @@
 						                <option value="IT20">T20 International</option>
 						                <option value="DT20">Domestic T20</option>
 						                <option value="D10">Domestic 10 Overs</option>
-						                <option value="TEST">Test Match</option>
-						                <option value="SUPER_OVER">Super Over</option>
 						                <option value="OD">Domestic One Day</option>
+						                <option value="SUPER_OVER">Super Over</option>
+										<option value="HONGKONG_SIXES">Hong Kong Sixes</option>
+						                <option value="TEST">Test Match</option>
 						                <option value="FC">First Class</option>
 						            </select>
 							        <label for="reducedOvers" class="form-label mb-0" style="white-space:nowrap;">Overs At Start</label>
