@@ -1423,6 +1423,10 @@ function processUserSelection(whichInput, extraData)
 							if(match_data.setup.specialMatchRules != null && match_data.setup.specialMatchRules == 'ISPL'){
 								document.getElementById('overwrite_batsman_nines').value = bc.nines;
 							}
+							if(match_data.setup.matchType.toUpperCase() == 'HONGKONG_SIXES') {
+								document.getElementById('select_overwrite_batting_card_special_status').value 
+									= bc.specialStatus == null ? '' : bc.specialStatus.toLowerCase();
+							}
 						}
 					});
 				}
@@ -3092,7 +3096,6 @@ function addItemsToList(whatToProcess, dataToProcess)
 								document.getElementById('extra_log_event_row_1').cells.length).appendChild(header_text).appendChild(select);	
 
 						}
-						
 					}
 				});
 			}

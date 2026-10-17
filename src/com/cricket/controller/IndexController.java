@@ -2082,10 +2082,8 @@ public class IndexController
 									bc.setNines(Integer.valueOf(valueToProcess.split(",")[7]));
 								}
 						        if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.HONGKONG_SIXES)) {
-									if(valueToProcess.split(",")[7].equalsIgnoreCase(CricketUtil.RUNNER_ONLY)) {
-										bc.setSpecialStatus(CricketUtil.RUNNER_ONLY);
-										this_event.getEventBattingCard().setSpecialStatus(CricketUtil.RUNNER_ONLY);
-									}
+									bc.setSpecialStatus(valueToProcess.split(",")[7]);
+									this_event.getEventBattingCard().setSpecialStatus(valueToProcess.split(",")[7]);
 								}
 							}
 						}
