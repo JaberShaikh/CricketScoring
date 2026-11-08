@@ -277,13 +277,37 @@ public class IndexController
 
 			BeanWrapperImpl matchWrapper = new BeanWrapperImpl(session_match.getMatch());
 	   		BeanWrapperImpl setupWrapper = new BeanWrapperImpl(session_match.getSetup());
-			
+	   		
+	   		String submittedMatchType = request.getParameter("matchType");
+	   		boolean isT20Test = CricketUtil.T20_TEST.equalsIgnoreCase(submittedMatchType != null ? submittedMatchType : session_match.getSetup().getMatchType());
+	   		
 			session_match.getSetup().setMatchDataUpdate(CricketUtil.START);
 			for (Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
 				if (entry.getValue()[0] == null || entry.getValue()[0].trim().isEmpty() || entry.getValue()[0].equalsIgnoreCase("undefined")) {
 					continue;
 				}
-				if(entry.getKey().toUpperCase().startsWith(CricketUtil.HOME + CricketUtil.PLAYER + "_") 
+				String key = entry.getKey();
+				if(isT20Test && key.matches("(?i)^(home|away)(Girls|Boys)Player_\\d+$")) {
+				    String[] keyParts = key.split("_");
+				    boolean isHome = keyParts[0].toLowerCase().startsWith("home");
+				    boolean isGirls = keyParts[0].toLowerCase().contains("girls");
+				    int slot = Integer.parseInt(keyParts[1]);
+				    String substituteParameter = isHome ? "homeSubstitutesNumber" : "awaySubstitutesNumber";
+				    int substituteCount = StringUtils.isNumeric(request.getParameter(substituteParameter)) ? Integer.parseInt(request.getParameter(substituteParameter)) : 0;
+				    int position = slot <= 11 ? (isGirls ? slot : slot + 11) : 22 + (isGirls ? 0 : substituteCount) + (slot - 11);
+				    int playerId = Integer.parseInt(entry.getValue()[0]);
+				    Player player = new Player(playerId, position);
+
+				    if(isHome) {
+				        setupHomeTeam.add(position + "|" + playerId);
+				        if(slot <= 11) home_squad.add(player);
+				        else home_substitutes.add(player);
+				    } else {
+				        setupAwayTeam.add(position + "|" + playerId);
+				        if(slot <= 11) away_squad.add(player);
+				        else away_substitutes.add(player);
+				    }
+				} else if(entry.getKey().toUpperCase().startsWith(CricketUtil.HOME + CricketUtil.PLAYER + "_") 
 					|| entry.getKey().toUpperCase().startsWith(CricketUtil.AWAY + CricketUtil.PLAYER + "_")) {
    					if(entry.getKey().split("_")[0].equalsIgnoreCase(CricketUtil.HOME + CricketUtil.PLAYER)) {
 						setupHomeTeam.add(entry.getKey().split("_")[1] + "|" + Integer.parseInt(entry.getValue()[0]));
@@ -322,7 +346,22 @@ public class IndexController
 	   			}
 	   		}
 			for (Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-	   			if(entry.getKey().toUpperCase().contains(CricketUtil.HOME + CricketUtil.CAPTAIN + CricketUtil.WICKET_KEEPER.replace("_", "")) 
+				String key = entry.getKey();
+				if(isT20Test && key.matches("(?i)^(home|away)(Girls|Boys)CaptainWicketKeeper_\\d+$")) {
+				    String[] keyParts = key.split("_");
+				    boolean isHome = keyParts[0].toLowerCase().startsWith("home");
+				    boolean isGirls = keyParts[0].toLowerCase().contains("girls");
+				    int slot = Integer.parseInt(keyParts[1]);
+				    int position = isGirls ? slot : slot + 11;
+				    List<Player> players = isHome ? home_squad : away_squad;
+
+				    for(Player player : players) {
+				        if(player.getPlayerPosition() == position) {
+				            player.setCaptainWicketKeeper(entry.getValue()[0]);
+				            break;
+				        }
+				    }
+				} else if(entry.getKey().toUpperCase().contains(CricketUtil.HOME + CricketUtil.CAPTAIN + CricketUtil.WICKET_KEEPER.replace("_", "")) 
 	   					|| entry.getKey().toUpperCase().contains(CricketUtil.AWAY + CricketUtil.CAPTAIN + CricketUtil.WICKET_KEEPER.replace("_", ""))) {
 	   				if(entry.getKey().split("_")[0].equalsIgnoreCase(CricketUtil.HOME + CricketUtil.CAPTAIN + CricketUtil.WICKET_KEEPER.replace("_", ""))) {
 	   					for(Player plyr:home_squad) {
@@ -386,7 +425,8 @@ public class IndexController
 		   			session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.OD)) {
 		   			session_match.getSetup().setMaxOvers(CricketUtil.ODI_MAXIMUM_OVERS);
 		   		} else if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.IT20) 
-		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.DT20)) {
+		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.DT20)
+		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.T20_TEST)) {
 		   			session_match.getSetup().setMaxOvers(CricketUtil.T20_MAXIMUM_OVERS);
 		   		} else if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.D10)) {
 		   			session_match.getSetup().setMaxOvers(CricketUtil.D10_MAXIMUM_OVERS);
@@ -400,7 +440,8 @@ public class IndexController
 		   		}
 
 		   		if(session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.TEST) 
-		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)) {
+		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)
+		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.T20_TEST)) {
 		   			max_inns = CricketUtil.TEST_MATCH_MAXIMUM_INNINGS;
 		   		} else {
 		   			max_inns = CricketUtil.LIMITED_OVER_MAXIMUM_INNINGS;
@@ -428,6 +469,7 @@ public class IndexController
 						break;
 					case CricketUtil.IT20:
 					case CricketUtil.DT20:
+					case CricketUtil.T20_TEST:
 						session_match.getSetup().setNumberOfPowerplays(1);
 						for(int i=1; i<=max_inns; i++) {
 						    if (inns.get(i-1).getFirstPowerplayStartOver() == null || inns.get(i-1).getFirstPowerplayStartOver().isBlank()) {
@@ -588,7 +630,8 @@ public class IndexController
 	   				Collections.sort(inn.getBattingCard());
 				}
 		   		if((session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.TEST) 
-		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)) 
+		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.FC)
+		   			|| session_match.getSetup().getMatchType().equalsIgnoreCase(CricketUtil.T20_TEST)) 
 		   			&& inns.size() >= CricketUtil.TEST_MATCH_MAXIMUM_INNINGS) {
 					
 		   			Inning this_inn;
@@ -1493,6 +1536,25 @@ public class IndexController
 				
 				session_match.getSetup().setHomeTeam(cricketService.getTeam(CricketUtil.TEAM, valueToProcess.split(",")[0]));
 				session_match.getSetup().setAwayTeam(cricketService.getTeam(CricketUtil.TEAM, valueToProcess.split(",")[1]));
+				
+				String[] teamIds = valueToProcess.split(",");
+				if(CricketUtil.T20_TEST.equalsIgnoreCase(session_match.getSetup().getMatchType())) {
+				    List<Player> homeFemalePlayers = cricketService.getPlayers(CricketUtil.GENDER_SPECIFIC_TEAM, teamIds[0] + ",FEMALE");
+				    List<Player> homeMalePlayers = cricketService.getPlayers(CricketUtil.GENDER_SPECIFIC_TEAM, teamIds[0] + ",MALE");
+				    List<Player> awayFemalePlayers = cricketService.getPlayers(CricketUtil.GENDER_SPECIFIC_TEAM, teamIds[1] + ",FEMALE");
+				    List<Player> awayMalePlayers = cricketService.getPlayers(CricketUtil.GENDER_SPECIFIC_TEAM, teamIds[1] + ",MALE");
+				    if(homeFemalePlayers.size() < 11 || homeMalePlayers.size() < 11 || awayFemalePlayers.size() < 11 || awayMalePlayers.size() < 11) {
+				        String message = "Each team must have at least 11 FEMALE and 11 MALE players. ";
+				        if(homeFemalePlayers.size() < 11 || homeMalePlayers.size() < 11) message += "Home team: " + homeFemalePlayers.size() + " FEMALE, " + homeMalePlayers.size() + " MALE. ";
+				        if(awayFemalePlayers.size() < 11 || awayMalePlayers.size() < 11) message += "Away team: " + awayFemalePlayers.size() + " FEMALE, " + awayMalePlayers.size() + " MALE.";
+				        return objectMapper.writeValueAsString(Collections.singletonMap("errorMessage", message));
+				    }
+				    session_match.getSetup().setHomeTeam(cricketService.getTeam(CricketUtil.TEAM, teamIds[0]));
+				    session_match.getSetup().setAwayTeam(cricketService.getTeam(CricketUtil.TEAM, teamIds[1]));
+				    session_match.getSetup().setHomeSquad(cricketService.getPlayers(CricketUtil.TEAM, teamIds[0]));
+				    session_match.getSetup().setAwaySquad(cricketService.getPlayers(CricketUtil.TEAM, teamIds[1]));
+				    return objectMapper.writeValueAsString(session_match);
+				}				
 				
 				boolean correctTeamLoaded = false;
 				if(session_match.getSetup().getHomeSquad() != null && session_match.getSetup().getHomeSquad().size() > 0) {

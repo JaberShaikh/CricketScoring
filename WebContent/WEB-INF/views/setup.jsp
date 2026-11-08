@@ -57,6 +57,7 @@
 										<option value="HONGKONG_SIXES">Hong Kong Sixes</option>
 						                <option value="TEST">Test Match</option>
 						                <option value="FC">First Class</option>
+						                <option value="T20_TEST">T20 Test</option>
 						            </select>
 							        <label for="reducedOvers" class="form-label mb-0" style="white-space:nowrap;">Overs At Start</label>
 							        <input type="text" id="reducedOvers" name="reducedOvers" style="width:70px;" class="form-control form-control-sm floatlabel custom-small-border">

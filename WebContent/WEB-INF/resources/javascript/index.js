@@ -687,7 +687,7 @@ function processUserSelection(whichInput, extraData)
 /*				inn.battingCard.forEach(function(bc,index,arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.full_name;
+				    option.text = formatPlayerName(bc.player);
 				    select.appendChild(option);
 				});*/
 				
@@ -1251,7 +1251,7 @@ function processUserSelection(whichInput, extraData)
 						if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 							option = document.createElement('option');
 							option.value = bc.player.playerId;
-						    option.text = bc.player.full_name;
+						    option.text = formatPlayerName(bc.player);
 						    if(bc.status.toLowerCase() == 'out') {
 							    option.selected = true;
 						    }
@@ -1303,7 +1303,7 @@ function processUserSelection(whichInput, extraData)
 					inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -1326,7 +1326,7 @@ function processUserSelection(whichInput, extraData)
 						if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 							option = document.createElement('option');
 							option.value = bc.player.playerId;
-						    option.text = bc.player.full_name;
+						    option.text = formatPlayerName(bc.player);
 						    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 							    option.selected = true;
 						    }
@@ -1350,7 +1350,7 @@ function processUserSelection(whichInput, extraData)
 				    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 			    	    if(bc.status.toLowerCase() == 'currentbowler') {
 						    option.selected = true;
 					    }
@@ -1680,10 +1680,15 @@ function processCricketProcedures(whatToProcess, whichInput)
 		break;
 		
 	case 'LOAD_TEAMS':
-	
-		value_to_process = $('#homeTeamId option:selected').val() + ',' + $('#awayTeamId option:selected').val();
-			+ ',' + $('#playerGender option:selected').val();
-		break;
+	    if ($('#matchType').val() === 'T20_TEST') {
+	        value_to_process = $('#homeTeamId option:selected').val() + ',' + $('#awayTeamId option:selected').val();
+	    } else {
+	        value_to_process = $('#homeTeamId option:selected').val() + ',' + $('#awayTeamId option:selected').val();
+	        if ($('#playerGender').length) {
+	            value_to_process += ',' + $('#playerGender option:selected').val();
+	        }
+	    }
+	    break;
 	
 	case 'LOAD_BACKUP_MATCH':
 		
@@ -2137,6 +2142,162 @@ function processCricketProcedures(whatToProcess, whichInput)
 	    }   
 	});
 }
+function switchT20GenderTab(team, gender) {
+    ['FEMALE', 'MALE'].forEach(function(g) {
+        var panel = document.getElementById(team + '_' + g + '_panel');
+        var button = document.getElementById(team + '_' + g + '_tab');
+        if(panel) panel.style.display = g === gender ? '' : 'none';
+        if(button) {
+            button.style.backgroundColor = g === gender ? (g === 'FEMALE' ? '#e83e8c' : '#0d6efd') : '#6c757d';
+            button.style.color = '#fff';
+        }
+    });
+}
+function formatPlayerName(player) {
+    if(match_data.setup.matchType === 'T20_TEST' && player.gender) {
+        return player.full_name + (player.gender.toUpperCase() === 'FEMALE' ? ' (F)' : player.gender.toUpperCase() === 'MALE' ? ' (M)' : '');
+    }
+    return player.full_name;
+}
+function renderT20TestTeamSelection(data) {
+    var container = document.getElementById('team_selection_div');
+    container.innerHTML = '';
+
+    function getPlayers(setup, team, gender) {
+        var players = [];
+        var collections = [
+            setup[team + 'Squad'],
+            setup[team + 'Substitutes'],
+            setup[team + 'OtherSquad']
+        ];
+        collections.forEach(function(collection) {
+            if(collection) {
+                collection.forEach(function(player) {
+                    if(player.gender && player.gender.trim().toUpperCase() === gender && !players.some(function(p) { return p.playerId === player.playerId; })) {
+                        players.push(player);
+                    }
+                });
+            }
+        });
+        return players;
+    }
+
+    function createTeam(team, teamName, setup) {
+        var teamContainer = document.createElement('div');
+        teamContainer.className = 'col-md-6 mb-3';
+        var heading = document.createElement('h5');
+        heading.textContent = teamName;
+        teamContainer.appendChild(heading);
+
+        var tabs = document.createElement('div');
+        tabs.className = 'd-flex gap-2 mb-2';
+
+        ['FEMALE', 'MALE'].forEach(function(gender) {
+            var label = gender === 'FEMALE' ? 'Girls' : 'Boys';
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.id = team + '_' + gender + '_tab';
+            button.className = 'btn btn-sm';
+            button.textContent = label;
+            button.onclick = function() { switchT20GenderTab(team, gender); };
+            tabs.appendChild(button);
+        });
+
+        teamContainer.appendChild(tabs);
+
+		['FEMALE', 'MALE'].forEach(function(gender) {
+		    var label = gender === 'FEMALE' ? 'Girls' : 'Boys';
+		    var panel = document.createElement('div');
+            panel.id = team + '_' + gender + '_panel';
+
+            var players = getPlayers(setup, team, gender);
+            var substituteCount = parseInt($('#' + team + 'SubstitutesNumber').val()) || 0;
+            var totalSlots = 11 + substituteCount;
+
+            if(players.length < totalSlots) {
+                var note = document.createElement('div');
+                note.className = 'alert alert-info';
+                note.textContent = 'Available ' + label + ' players: ' + players.length;
+                panel.appendChild(note);
+            }
+
+            var table = document.createElement('table');
+            table.className = 'table table-bordered table-sm';
+            var thead = document.createElement('thead');
+            thead.innerHTML = '<tr><th>Pos</th><th>' + label + ' Player</th><th>Captain / Keeper</th></tr>';
+            table.appendChild(thead);
+
+            var tbody = document.createElement('tbody');
+
+            for(var i = 1; i <= totalSlots; i++) {
+                var row = tbody.insertRow();
+                row.insertCell().textContent = i <= 11 ? i : 'Sub ' + (i - 11);
+
+                var playerCell = row.insertCell();
+                var select = document.createElement('select');
+                select.id = team + label + 'Player_' + i;
+                select.name = select.id;
+                select.className = 'form-select form-select-sm ' + (team === 'home' ? 'selectHomePlayers' : 'selectAwayPlayers');
+                select.style.width = '100%';
+
+                players.forEach(function(player) {
+                    var option = document.createElement('option');
+                    option.value = player.playerId;
+                    option.text = player.full_name;
+                    select.appendChild(option);
+                });
+
+                if(players.length > 0) {
+                    select.selectedIndex = Math.min(i - 1, players.length - 1);
+                }
+
+                playerCell.appendChild(select);
+
+                var roleCell = row.insertCell();
+                if(i <= 11) {
+                    var role = document.createElement('select');
+                    role.id = team + label + 'CaptainWicketKeeper_' + i;
+                    role.name = role.id;
+                    role.className = 'form-select form-select-sm';
+                    ['', 'captain', 'wicket_keeper', 'captain_wicket_keeper'].forEach(function(value) {
+                        var option = document.createElement('option');
+                        option.value = value;
+                        option.text = value === '' ? '' : value === 'captain' ? 'Captain' : value === 'wicket_keeper' ? 'Wicket Keeper' : 'Captain And Wicket Keeper';
+                        role.appendChild(option);
+                    });
+					(function(playerSelect, roleSelect, playerList) {
+					    function restoreRole() {
+					        var selectedPlayer = playerList.find(function(player) {
+					            return String(player.playerId) === playerSelect.value;
+					        });
+					        roleSelect.value = selectedPlayer ? selectedPlayer.captainWicketKeeper || '' : '';
+					    }
+					    playerSelect.addEventListener('change', restoreRole);
+					    restoreRole();
+					})(select, role, players);
+
+					roleCell.appendChild(role);
+                }
+            }
+
+            table.appendChild(tbody);
+            panel.appendChild(table);
+            teamContainer.appendChild(panel);
+        });
+
+        row.appendChild(teamContainer);
+        switchT20GenderTab(team, 'FEMALE');
+    }
+
+    var row = document.createElement('div');
+    row.className = 'row text-start';
+    container.appendChild(row);
+
+    createTeam('home', data.setup.homeTeam.teamName4, data.setup);
+    createTeam('away', data.setup.awayTeam.teamName4, data.setup);
+
+    container.style.display = '';
+}
 function addItemsToList(whatToProcess, dataToProcess)
 {
 	var max_cols,div,linkDiv,anchor,row,cell,header_text,select,option,tr,th,thead,text,table,tbody,which_inn,total_runs,plyr;
@@ -2474,7 +2635,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -2495,7 +2656,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.full_name;
+				    option.text = formatPlayerName(bc.player);
 		    	    if(bc.status.toLowerCase() == 'currentbowler' || bc.status.toLowerCase() == 'lastbowler') {
 					    option.selected = true;
 				    }
@@ -2793,7 +2954,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.full_name;
+				    option.text = formatPlayerName(bc.player);
 		    	    if(bc.status != null && bc.status.toLowerCase() == 'currentbowler') {
 					    option.selected = true;
 				    }
@@ -2981,7 +3142,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -3127,119 +3288,6 @@ function addItemsToList(whatToProcess, dataToProcess)
 		
 		break;
 
-/*	case 'LOAD_OVERWRITE_SUBSTITUTION':
-	
-		$('#extra_log_event_row_1').empty();
-		
-		select = document.createElement('select');
-		select.id = 'select_current_substitution_index';
-		match_data.match.inning.forEach(function(inn,index,arr){
-			if(inn.isCurrentInning.toLowerCase() == 'yes') {
-				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
-					option = document.createElement('option');
-					option.value = bc.player.playerId;
-				    option.text = bc.player.full_name;
-				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
-					    option.selected = true;
-				    }
-				    select.appendChild(option);
-				});
-			}
-		});
-		header_text = document.createElement('label');
-		header_text.innerHTML = 'Choose CURRENT batsman: ';
-		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(0).appendChild(header_text).appendChild(select);	
-		
-		select = document.createElement('select');
-		select.id = 'select_overwrite_substitution_index';
-		match_data.match.inning.forEach(function(inn,index,arr){
-			if(inn.isCurrentInning.toLowerCase() == 'yes') {
-				if(inn.battingTeamId == match_data.setup.homeTeamId) {
-					match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.full_name;
-					    select.appendChild(option);
-					});
-				}else if(inn.battingTeamId == match_data.setup.awayTeamId) {
-					match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-					    option.text = as.full_name;
-					    select.appendChild(option);
-					});
-				}
-			}
-		});
-		header_text = document.createElement('label');
-		header_text.innerHTML = 'Choose OVERWRITE batsman: ';
-		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(1).appendChild(header_text).appendChild(select);	
-
-		select = document.createElement('select');
-		select.id = 'select_overwrite_substitution_position';
-		for(var i = 1; i <= 11; i++) {
-			option = document.createElement('option');
-			option.value = i;
-		    option.text = i;
-		    select.appendChild(option);
-		}
-		header_text = document.createElement('label');
-		header_text.innerHTML = 'Choose OVERWRITE position: ';
-		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(2).appendChild(header_text).appendChild(select);	
-
-		select = document.createElement('select');
-		select.id = 'select_overwrite_substitution_reason';
-		for(var i = 1; i <= 3; i++) {
-			option = document.createElement('option');
-			switch(i) {
-			case 1:
-				option.value = '';
-			    option.text = '';
-				break;
-			case 2:
-				option.value = 'impact';
-			    option.text = 'Impact Player';
-				break;
-			case 3:
-				option.value = 'concussion';
-			    option.text = 'Concussion';
-				break;
-			}
-		    select.appendChild(option);
-		}
-		header_text = document.createElement('label');
-		header_text.innerHTML = 'Choose OVERWRITE reason: ';
-		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(3).appendChild(header_text).appendChild(select);	
-
-	    option = document.createElement('input');
-	    option.type = 'button';
-	    option.name = 'log_substitution_overwrite_btn';
-	    option.value = 'Log Batting Card Overwrite';
-	    option.id = option.name;
-	    option.setAttribute('onclick','processUserSelection(this);');
-	    
-	    div = document.createElement('div');
-	    div.append(option);
-
-		option = document.createElement('input');
-		option.type = 'button';
-		option.name = 'cancel_overwrite_btn';
-		option.id = option.name;
-		option.value = 'Cancel';
-		option.style.marginTop = '8px'; 
-		option.setAttribute('onclick','processUserSelection(this)');
-
-	    div.append(document.createElement('br'));
-	    div.append(option);
-	    
-	    document.getElementById('extra_log_event_row_1').insertCell(4).appendChild(div);
-		
-		break;*/
-
 	case 'LOAD_OVERWRITE_BATTINGCARD':
 	
 		$('#extra_log_event_row_1').empty();
@@ -3269,7 +3317,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.full_name;
+				    option.text = formatPlayerName(bc.player);
 				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
@@ -3290,7 +3338,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.full_name;
+				    option.text = formatPlayerName(bc.player);
 				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
@@ -3376,7 +3424,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    if(bc.status.toLowerCase() == 'out') {
 						    option.selected = true;
 					    }
@@ -3539,7 +3587,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					inn.bowlingCard.forEach(function(bc,index,arr){
 						option = document.createElement('option');
 						option.value = bc.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    select.appendChild(option);
 					});
 				}
@@ -3939,6 +3987,15 @@ function addItemsToList(whatToProcess, dataToProcess)
 		
 		if (dataToProcess)
 		{
+			if($('#matchType').val() === 'T20_TEST') {
+			    if(!dataToProcess.setup.homeSquad || !dataToProcess.setup.awaySquad) {
+			        alert('Unable to load the selected teams.');
+			        return false;
+			    }
+			    renderT20TestTeamSelection(dataToProcess);
+			    break;
+			}			
+			
 			if(dataToProcess.setup.homeSquad.length <=0 || dataToProcess.setup.awaySquad.length <=0) {
 				if(dataToProcess.setup.homeSquad.length <=0) {
 					alert(dataToProcess.setup.homeTeam.teamName1 + ' has no players in the database');
@@ -4897,543 +4954,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 
 		table.style.tableLayout = 'auto';
 		table.style.width = 'auto';
-		
-/*		table = document.createElement('table');
-		table.setAttribute('class', 'table table-bordered events-table');
-		tr = document.createElement('tr');
-		for(var iTeam=1; iTeam <= 3; iTeam++) {
-		    th = document.createElement('th');
-		    switch(iTeam) {
-			case 1:
-				text = document.createTextNode(match_data.setup.homeTeam.teamName4);
-				break;
-			case 2:
-				text = document.createTextNode('Stats');
-				break;
-			case 3:
-				text = document.createTextNode(match_data.setup.awayTeam.teamName4);
-				break;
-			}
-		    th.appendChild(text);
-		    tr.appendChild(th);
-		}
-		thead = document.createElement('thead');
-		thead.appendChild(tr);
-		table.appendChild(thead);
-		
-		tbody = document.createElement('tbody');
-		table.appendChild(tbody);
-		
-		for (var iStat = 1; iStat<= 6; iStat++) {
-						
-			row = tbody.insertRow(tbody.rows.length);
-		 	
-		 	switch(iStat){
-			case 1:
-			
-			 	cell = row.insertCell(0);
-				cell.innerHTML = match_data.setup.reviewsPerTeam;
-				
-			 	cell = row.insertCell(1);
-				cell.innerHTML = 'Total';
-				
-			 	cell = row.insertCell(2);
-				cell.innerHTML = match_data.setup.reviewsPerTeam;
-				
-				break;
-				
-			case 2:
-			
-			 	cell = row.insertCell(0);
-				cell.innerHTML = successful_reviews_1;
-				cell.setAttribute("name", 'overwriteSuccessfullReviews');
-				cell.setAttribute("id", 'overwriteSuccessfullReviews_1');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-			 	cell = row.insertCell(1);
-				cell.innerHTML = 'Success';
-
-			 	cell = row.insertCell(2);
-				cell.innerHTML = successful_reviews_2;
-				cell.setAttribute("name", 'overwriteSuccessfullReviews');
-				cell.setAttribute("id", 'overwriteSuccessfullReviews_2');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-
-				break;
-				
-			case 3:
-			
-			 	cell = row.insertCell(0);
-				cell.innerHTML = unsuccessful_reviews_1;
-				cell.setAttribute("name", 'overwriteUnsuccessfullReviews');
-				cell.setAttribute("id", 'overwriteUnsuccessfullReviews_1');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-			 	cell = row.insertCell(1);
-				cell.innerHTML = 'Fail';
-				
-			 	cell = row.insertCell(2);
-				cell.innerHTML = unsuccessful_reviews_2;
-				cell.setAttribute("name", 'overwriteUnsuccessfullReviews');
-				cell.setAttribute("id", 'overwriteUnsuccessfullReviews_2');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-				break;
-				
-			case 4:
-			
-			 	cell = row.insertCell(0);
-				cell.innerHTML = retained_reviews_1;
-				cell.setAttribute("name", 'overwriteRetainedReviews');
-				cell.setAttribute("id", 'overwriteRetainedReviews_1');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-			 	cell = row.insertCell(1);
-				cell.innerHTML = 'Retain';
-				
-			 	cell = row.insertCell(2);
-				cell.innerHTML = retained_reviews_2;
-				cell.setAttribute("name", 'overwriteRetainedReviews');
-				cell.setAttribute("id", 'overwriteRetainedReviews_2');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-				break;
-				
-			case 5:
-			
-			 	cell = row.insertCell(0);
-				cell.innerHTML = unretained_reviews_1;
-				cell.setAttribute("name", 'overwriteUnretainedReviews');
-				cell.setAttribute("id", 'overwriteUnretainedReviews_1');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-			 	cell = row.insertCell(1);
-				cell.innerHTML = 'Lost';
-				
-			 	cell = row.insertCell(2);
-				cell.innerHTML = unretained_reviews_2;
-				cell.setAttribute("name", 'overwriteUnretainedReviews');
-				cell.setAttribute("id", 'overwriteUnretainedReviews_2');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-				break;
-				
-			case 6:
-			
-			 	cell = row.insertCell(0);
-				cell.innerHTML = match_data.setup.reviewsPerTeam - unretained_reviews_1;
-				cell.setAttribute("name", 'overwriteReviewsRemaining');
-				cell.setAttribute("id", 'overwriteReviewsRemaining_1');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-			 	cell = row.insertCell(1);
-				cell.innerHTML = 'Remain';
-				
-			 	cell = row.insertCell(2);
-				cell.innerHTML = match_data.setup.reviewsPerTeam - unretained_reviews_2;
-				cell.setAttribute("name", 'overwriteReviewsRemaining');
-				cell.setAttribute("id", 'overwriteReviewsRemaining_2');
-				cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-				cell.addEventListener("contextmenu", function (e) {
-				    e.preventDefault(); 
-				    processUserSelection(this, "DOUBLE_CLICK");
-				});			
-				
-				break;
-			}
-		}
-		
-	    div = document.createElement('div');
-	    div.append(table);
-		normalizeAndAppendTable(table, div, 'extra_log_event_row_1');
-		
-		document.getElementById('extra_log_event_row_1').insertCell(4).appendChild(div);*/
 		break;		
-				
-/*	case 'LOAD_REVIEW':
-		
-		$('#extra_log_event_row_1').empty();
-
-		select = document.createElement('select');
-		select.id = 'select_review_team';
-		for(var iTeam=1; iTeam <= 2; iTeam++) {
-			option = document.createElement('option');
-			if(iTeam==1) {
-				option.value = match_data.setup.homeTeamId;
-			    option.text = match_data.setup.homeTeam.teamName4;
-			} else {
-				option.value = match_data.setup.awayTeamId;
-			    option.text = match_data.setup.awayTeam.teamName4;
-			}
-		    select.appendChild(option);
-		}
-		header_text = document.createElement('label');
-		header_text.innerHTML = 'Team: ';
-		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(0).appendChild(header_text).appendChild(select);
-		
-		select = document.createElement('select');
-		select.id = 'select_review_result';
-		for(var i=1; i <= 2; i++) {
-			option = document.createElement('option');
-			if(i==1) {
-				option.value = 'successful';
-			    option.text = 'Pass';
-			} else {
-				option.value = 'unsuccessful';
-			    option.text = 'Fail';
-			}
-		    select.appendChild(option);
-		}
-		header_text = document.createElement('label');
-		header_text.innerHTML = 'Result: ';
-		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(1).appendChild(header_text).appendChild(select);
-
-		select = document.createElement('select');
-		select.id = 'select_review_retain';
-		for(var i=1; i <= 2; i++) {
-			option = document.createElement('option');
-			if(i==1) {
-				option.value = 'retained';
-			    option.text = 'Retained';
-			} else {
-				option.value = 'unretained';
-			    option.text = 'Lost';
-			}
-		    select.appendChild(option);
-		}
-		header_text = document.createElement('label');
-		header_text.innerHTML = 'Retained: ';
-		header_text.htmlFor = select.id;
-		document.getElementById('extra_log_event_row_1').insertCell(2).appendChild(header_text).appendChild(select);
-		
-	    div = document.createElement('div');
-
-	    option = document.createElement('input');
-	    option.type = 'button';
-	    option.name = 'log_review_btn';
-	    option.id = option.name;
-	    option.value = 'Log Review';
-	    option.setAttribute('onclick','processUserSelection(this)');
-	    
-	    div.append(option);
-
-		option = document.createElement('input');
-		option.type = 'button';
-		option.name = 'cancel_review_btn';
-		option.id = option.name;
-		option.value = 'Cancel';
-		option.style.marginTop = '8px'; 
-		option.setAttribute('onclick','processUserSelection(this)');
-
-	    div.append(document.createElement('br'));
-	    div.append(option);
-
-		option = document.createElement('input');
-		option.type = 'button';
-		option.name = 'overwrite_review_btn';
-		option.id = option.name;
-		option.value = 'Overwrite';
-		option.setAttribute('onclick','processUserSelection(this)');
-
-		div.append(document.createElement('br'));
-		div.append(option);
-	
-	    document.getElementById('extra_log_event_row_1').insertCell(3).appendChild(div);
-
-		table = document.createElement('table');
-		table.setAttribute('class', 'table table-bordered');
-		tr = document.createElement('tr');
-		for (var j = 0; j <= 6; j++) {
-		    th = document.createElement('th'); //column
-		    switch (j) {
-			case 0:
-			    text = document.createTextNode('Teams'); 
-				break;
-			case 1:
-			    text = document.createTextNode('Total'); 
-				break;
-			case 2:
-			    text = document.createTextNode('Success'); 
-				break;
-			case 3:
-			    text = document.createTextNode('Fail'); 
-				break;
-			case 4:
-			    text = document.createTextNode('Retained'); 
-				break;
-			case 5:
-			    text = document.createTextNode('Lost'); 
-				break;
-			case 6:
-			    text = document.createTextNode('Remaining'); 
-				break;
-			}
-		    th.appendChild(text);
-		    tr.appendChild(th);
-		}
-		thead = document.createElement('thead');
-		thead.appendChild(tr);
-		table.appendChild(thead);
-		
-		tbody = document.createElement('tbody');
-		table.appendChild(tbody);
-
-		var successful_reviews = 0, unsuccessful_reviews = 0, retained_reviews = 0, unretained_reviews = 0;
-		for(var iTeam=1; iTeam <= 2; iTeam++) {
-			
-			row = tbody.insertRow(tbody.rows.length);
-		 	cell = row.insertCell(0);
-
-			if(iTeam==1) {
-				cell.innerHTML = match_data.setup.homeTeam.teamName4;
-			} else if(iTeam==2) {
-				cell.innerHTML = match_data.setup.awayTeam.teamName4;
-			}
-
-			cell = row.insertCell(1);
-			cell.innerHTML = match_data.setup.reviewsPerTeam;
-
-			successful_reviews = 0, unsuccessful_reviews = 0, retained_reviews = 0, unretained_reviews = 0;
-			match_data.match.inning.forEach(function(inn,index,arr){
-				if(inn.isCurrentInning.toLowerCase() == 'yes') {
-					if(inn.reviews) {
-						inn.reviews.forEach(function(rev,index,arr){
-							if(iTeam==1) {
-								if(rev.reviewTeamId == match_data.setup.homeTeamId) {
-									if(rev.reviewRetained.toLowerCase() == 'retained') {
-										retained_reviews = retained_reviews + 1;
-									} else if(rev.reviewRetained.toLowerCase() == 'unretained') {
-										unretained_reviews = unretained_reviews + 1;
-									}
-									if(rev.reviewStatus.toLowerCase() == 'successful') {
-										successful_reviews = successful_reviews + 1;
-									} else if(rev.reviewStatus.toLowerCase() == 'unsuccessful') {
-										unsuccessful_reviews = unsuccessful_reviews + 1;
-									}
-								}
-							} else if(iTeam==2) {
-								if(rev.reviewTeamId == match_data.setup.awayTeamId) {
-									if(rev.reviewRetained.toLowerCase() == 'retained') {
-										retained_reviews = retained_reviews + 1;
-									} if(rev.reviewRetained.toLowerCase() == 'unretained') {
-										unretained_reviews = unretained_reviews + 1;
-									}
-									if(rev.reviewStatus.toLowerCase() == 'successful') {
-										successful_reviews = successful_reviews + 1;
-									} else if(rev.reviewStatus.toLowerCase() == 'unsuccessful') {
-										unsuccessful_reviews = unsuccessful_reviews + 1;
-									}
-								}
-							}
-						});
-					}
-				}
-			});
-			cell = row.insertCell(2);
-			cell.innerHTML = successful_reviews;
-			cell.setAttribute("name", 'overwriteSuccessfullReviews');
-			cell.setAttribute("id", 'overwriteSuccessfullReviews_' + iTeam);
-			cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-			cell.addEventListener("contextmenu", function (e) {
-			    e.preventDefault(); // stop default right-click menu
-			    processUserSelection(this, "DOUBLE_CLICK");
-			});			
-
-			cell = row.insertCell(3);
-			cell.innerHTML = unsuccessful_reviews;
-			cell.setAttribute("name", 'overwriteUnsuccessfullReviews');
-			cell.setAttribute("id", 'overwriteUnsuccessfullReviews_' + iTeam);
-			cell.setAttribute('onclick','processUserSelection(this, "SINGLE_CLICK")');
-			cell.addEventListener("contextmenu", function (e) {
-			    e.preventDefault(); // stop default right-click menu
-			    processUserSelection(this, "DOUBLE_CLICK");
-			});			
-
-			cell = row.insertCell(4);
-			cell.innerHTML = retained_reviews;
-			cell.setAttribute("name", 'overwriteRetainedReviews');
-			cell.setAttribute("id", 'overwriteRetainedReviews_' + iTeam);
-			
-			cell = row.insertCell(5);
-			cell.innerHTML = unretained_reviews;
-			cell.setAttribute("name", 'overwriteUnretainedReviews');
-			cell.setAttribute("id", 'overwriteUnretainedReviews_' + iTeam);
-			
-			cell = row.insertCell(6);
-			cell.innerHTML = match_data.setup.reviewsPerTeam - unretained_reviews;
-			cell.setAttribute("name", 'overwriteReviewsRemaining');
-			cell.setAttribute("id", 'overwriteReviewsRemaining_' + iTeam);
-			
-		}
-	    div = document.createElement('div');
-	    div.append(table);
-	    
-		document.getElementById('extra_log_event_row_1').insertCell(0).appendChild(div);
-
-		break;
-
-	case 'LOAD_NEW_BATSMAN':
-		
-		$('#extra_log_event_row_1').empty();
-		
-		match_data.match.inning.forEach(function(inn,index,arr) {
-			if(inn.isCurrentInning.toLowerCase() == 'yes') {
-				
-				select = document.createElement('select');
-				select.id = 'select_new_batsman';
-				select.name = select.id;
-				if(inn.battingTeamId == match_data.setup.homeTeamId) {
-					match_data.setup.homeSquad.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.full_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.full_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = hs.playerId;
-					    option.text = hs.full_name;
-					    select.appendChild(option);
-					});
-				}else if(inn.battingTeamId == match_data.setup.awayTeamId) {
-					match_data.setup.awaySquad.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-					    option.text = as.full_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-					    option.text = as.full_name;
-					    select.appendChild(option);
-					});
-					match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
-						option = document.createElement('option');
-						option.value = as.playerId;
-					    option.text = as.full_name;
-					    select.appendChild(option);
-					});
-				}
-			    select.setAttribute('onchange','processUserSelection(this);');
-
-				header_text = document.createElement('label');
-				header_text.innerHTML = 'Choose Batsman: ';
-				header_text.htmlFor = select.id;
-				document.getElementById('extra_log_event_row_1').insertCell(0).appendChild(header_text).appendChild(select);
-				removeDuplicateOptions(select.id);
-
-				select = document.createElement('select');
-				select.id = 'select_outgoing_batsman';
-				select.name = select.id;
-				inn.battingCard.forEach(function(bc,index,arr){
-					option = document.createElement('option');
-					option.value = bc.playerId;
-				    option.text = bc.player.full_name;
-				    select.appendChild(option);
-				});
-				header_text = document.createElement('label');
-				header_text.innerHTML = 'Choose Outgoing Batsman: ';
-				header_text.htmlFor = select.id;
-				document.getElementById('extra_log_event_row_1').insertCell(1).appendChild(header_text).appendChild(select);
-
-				select = document.createElement('select');
-				select.id = 'select_new_batsman_reason';
-				for(var i = 1; i <= 3; i++) {
-					option = document.createElement('option');
-					switch(i) {
-					case 1:
-						option.value = '';
-					    option.text = '';
-						break;
-					case 2:
-						option.value = 'impact';
-					    option.text = 'Impact Player';
-						break;
-					case 3:
-						option.value = 'concussion';
-					    option.text = 'Concussion';
-						break;
-					}
-				    select.appendChild(option);
-				}
-				header_text = document.createElement('label');
-				header_text.innerHTML = 'Choose Replacement Reason: ';
-				header_text.htmlFor = select.id;
-				document.getElementById('extra_log_event_row_1').insertCell(2).appendChild(header_text).appendChild(select);	
-
-			}
-		});		
-
-		div = document.createElement('div');
-
-	    option = document.createElement('input');
-	    option.type = 'button';
-	    option.name = 'log_new_batsman_btn';
-	    option.id = option.name;
-	    option.value = 'Log New Batsman';
-	    option.setAttribute('onclick','processCricketProcedures("NEW_BATSMAN",this);');
-	    
-	    div.append(option);
-
-		option = document.createElement('input');
-		option.type = 'button';
-		option.name = 'cancel_new_batsman_btn';
-		option.id = option.name;
-		option.value = 'Cancel';
-		option.style.marginTop = '8px'; 
-		option.setAttribute('onclick','processUserSelection(this)');
-
-	    div.append(document.createElement('br'));
-	    div.append(option);
-
-	    document.getElementById('extra_log_event_row_1').insertCell(3).appendChild(div);
-		
-		break;*/
 		
 	case 'LOAD_CHANGE_BOWLER':
 		
@@ -5736,7 +5257,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -5796,7 +5317,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				match_data.match.inning[which_inn].battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.full_name;
+				    option.text = formatPlayerName(bc.player);
 					if(bc.player.captainWicketKeeper != null && bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						option.selected = true;
 					}
@@ -5904,7 +5425,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -6106,7 +5627,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -6138,7 +5659,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				match_data.match.inning[which_inn].battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = bc.player.full_name;
+				    option.text = formatPlayerName(bc.player);
 					if(bc.player.captainWicketKeeper != null && bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						option.selected = true;
 					}
@@ -6244,7 +5765,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = bc.player.full_name;
+					    option.text = formatPlayerName(bc.player);
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -6702,7 +6223,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						    	anchor = document.createElement('a');
 						    	anchor.className = 'dropdown-item cricket-item';
 							    anchor.id = option.id + ',' + bt.playerId;
-							    anchor.innerText= bt.full_name;
+							    anchor.innerText = formatPlayerName(bt);
 							    anchor.setAttribute('onclick','processCricketProcedures("LOG_EVENT",this);');
 							    anchor.style = 'display:block;';
 							    linkDiv.append(anchor);
