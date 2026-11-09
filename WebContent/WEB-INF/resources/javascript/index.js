@@ -39,14 +39,6 @@ function onWagonPageLoad()
     backgroundImg.src = 'resources/images/wagon_rhb.jpeg';
   }
 
-/*  backgroundImg = new Image();
-  if(match_data != null && match_data.match != null && match_data.match.wagonBatsmanStyle != null
-		&& match_data.match.wagonBatsmanStyle.toUpperCase() == 'LHB') {
-    backgroundImg.src = 'resources/images/wagon_lhb.jpeg';
-  } else {
-    backgroundImg.src = 'resources/images/wagon_rhb.jpeg';
-  }*/
-
   lastClickPerc = null;
   lastSector = null;
 
@@ -122,23 +114,6 @@ function wagonSector(xPerc, yPerc) {
   angleDeg = (angleDeg + 90) % 360;
   return Math.floor(angleDeg / 60) + 1;
 }
-/*function wagonSector(xPerc, yPerc) {
-  // center-relative coordinates (-50..+50)
-  const dx = xPerc - 50;
-  const dy = yPerc - 50;
-
-  // treat small radius as "center" if you want:
-  const distPerc = Math.sqrt(dx*dx + dy*dy);
-  if (distPerc < 5) return 'center'; // small dead-zone (5% of image half-size)
-
- let angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
- if (angleDeg < 0) angleDeg += 360; // normalize to [0,360)
- angleDeg = (angleDeg + 90) % 360; // rotate so 0° is at the top (north)
-
-  // each sector is 60°. sector 1 => [0,60), sector 2 => [60,120), ... sector 6 => [300,360)
-  const sector = Math.floor(angleDeg / 60) + 1;
-  return sector; // 1..6
-}*/
 function highlightSector(sector) {
   if (!ctx || !canvas) return;
   var cx = canvas.width / 2;
@@ -185,6 +160,18 @@ function secondsTimeSpanToMinutesAndSeconds(seconds) {
   seconds -= minutes * 60;
   return hours + ":" + (minutes < 10 ? '0' + minutes : minutes) + ":" 
 	+ (seconds < 10 ? '0' + seconds : seconds); //zero padding on minutes and seconds
+}
+function updatePlayerGenderOptions() {
+    var isT20Test = $('#matchType').val() === 'T20_TEST';
+    var select = document.getElementById('playerGender');
+    var label = document.getElementById('playerGenderLabel');
+    if(!select || !label) return;
+    label.textContent = isT20Test ? '1st Batting' : 'Gender';
+    Array.from(select.options).forEach(function(option) {
+        option.hidden = isT20Test ? !['GIRL', 'BOY'].includes(option.value) : ['GIRL', 'BOY'].includes(option.value);
+    });
+    if(isT20Test && !['GIRL', 'BOY'].includes(select.value)) select.value = 'GIRL';
+    if(!isT20Test && !['men', 'women'].includes(select.value)) select.value = 'men';
 }
 function processVariousProcesses(whatToProcess,valueToProcess)
 {
@@ -632,118 +619,29 @@ function processUserSelection(whichInput, extraData)
 		
 	case 'select_impact_team':
 
-		match_data.match.inning.forEach(function(inn,index,arr) {
-			if(inn.battingTeamId == $('#select_impact_team option:selected').val()) {
-				$('#select_impact_outgoing_player').empty();
-				select = document.getElementById('select_impact_outgoing_player');
-				if(match_data.setup.homeTeamId == $('#select_impact_team option:selected').val()) {
-					match_data.setup.homeSquad.forEach(function(hp,index,arr){
-						option = document.createElement('option');
-						option.value = hp.playerId;
-						option.text = hp.full_name;
-						select.appendChild(option);
-					});
-					if(match_data.setup.homeSubstitutes != null) {
-						match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-							option = document.createElement('option');
-							option.value = hs.playerId;
-						    option.text = hs.full_name;
-						    select.appendChild(option);
-						});
-					}
-					if(match_data.setup.homeOtherSquad != null) {
-						match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
-							option = document.createElement('option');
-							option.value = hos.playerId;
-						    option.text = hos.full_name;
-						    select.appendChild(option);
-						});
-					}
-				}else if(match_data.setup.awayTeamId == $('#select_impact_team option:selected').val()) {
-					match_data.setup.awaySquad.forEach(function(ap,index,arr){
-						option = document.createElement('option');
-						option.value = ap.playerId;
-						option.text = ap.full_name;
-						select.appendChild(option);
-					});
-					if(match_data.setup.awaySubstitutes != null) {
-						match_data.setup.awaySubstitutes.forEach(function(ap,bc_index,bc_arr){
-							option = document.createElement('option');
-							option.value = ap.playerId;
-						    option.text = ap.full_name;
-						    select.appendChild(option);
-						});
-					}
-					if(match_data.setup.awayOtherSquad != null) {
-						match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
-							option = document.createElement('option');
-							option.value = aos.playerId;
-						    option.text = aos.full_name;
-						    select.appendChild(option);
-						});
-					}
-				}
-				removeDuplicateOptions('select_impact_outgoing_player');
-/*				inn.battingCard.forEach(function(bc,index,arr){
-					option = document.createElement('option');
-					option.value = bc.player.playerId;
-				    option.text = formatPlayerName(bc.player);
-				    select.appendChild(option);
-				});*/
-				
-			}
-		});			
-		$('#select_impact_incoming_player').empty();
-		select = document.getElementById('select_impact_incoming_player');
-		if(match_data.setup.homeTeamId == $('#select_impact_team option:selected').val()) {
-			match_data.setup.homeSquad.forEach(function(hp,index,arr){
-				option = document.createElement('option');
-				option.value = hp.playerId;
-				option.text = hp.full_name;
-				select.appendChild(option);
-			});
-			if(match_data.setup.homeSubstitutes != null) {
-				match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
-					option = document.createElement('option');
-					option.value = hs.playerId;
-				    option.text = hs.full_name;
-				    select.appendChild(option);
-				});
-			}
-			if(match_data.setup.homeOtherSquad != null) {
-				match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
-					option = document.createElement('option');
-					option.value = hos.playerId;
-				    option.text = hos.full_name;
-				    select.appendChild(option);
-				});
-			}
-		}else if(match_data.setup.awayTeamId == $('#select_impact_team option:selected').val()) {
-			match_data.setup.awaySquad.forEach(function(ap,index,arr){
-				option = document.createElement('option');
-				option.value = ap.playerId;
-				option.text = ap.full_name;
-				select.appendChild(option);
-			});
-			if(match_data.setup.awaySubstitutes != null) {
-				match_data.setup.awaySubstitutes.forEach(function(ap,bc_index,bc_arr){
-					option = document.createElement('option');
-					option.value = ap.playerId;
-				    option.text = ap.full_name;
-				    select.appendChild(option);
-				});
-			}
-			if(match_data.setup.awayOtherSquad != null) {
-				match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
-					option = document.createElement('option');
-					option.value = aos.playerId;
-				    option.text = aos.full_name;
-				    select.appendChild(option);
-				});
-			}
-		}
-		removeDuplicateOptions('select_impact_incoming_player');
-		break;
+        var currentImpactInning = match_data.match.inning.find(function(inn) { return inn.isCurrentInning.toLowerCase() === 'yes'; });
+        if(currentImpactInning) {
+            var impactTeamId = $('#select_impact_team option:selected').val();
+            var impactPlayers = [];
+            var impactCollections = impactTeamId == match_data.setup.homeTeamId ? [match_data.setup.homeSquad, match_data.setup.homeSubstitutes, match_data.setup.homeOtherSquad] : [match_data.setup.awaySquad, match_data.setup.awaySubstitutes, match_data.setup.awayOtherSquad];
+            impactCollections.forEach(function(collection) {
+                if(collection) collection.forEach(function(player) {
+                    if(isPlayerEligibleForCurrentT20TestInning(player, currentImpactInning.inningNumber)) impactPlayers.push(player);
+                });
+            });
+            $('#select_impact_outgoing_player, #select_impact_incoming_player').empty();
+            ['select_impact_outgoing_player', 'select_impact_incoming_player'].forEach(function(selectId) {
+                var impactSelect = document.getElementById(selectId);
+                impactPlayers.forEach(function(player) {
+                    var impactOption = document.createElement('option');
+                    impactOption.value = player.playerId;
+                    impactOption.text = player.full_name;
+                    impactSelect.appendChild(impactOption);
+                });
+                removeDuplicateOptions(selectId);
+            });
+        }
+        break;
 	
 	case 'log_pp_btn':
 
@@ -817,12 +715,6 @@ function processUserSelection(whichInput, extraData)
 		document.getElementById('match-panel').style.display = '';
    		document.getElementById('match_sub_menu').className = 'panel-collapse collapse show';
 		$('input:checkbox').removeAttr('checked');
-		/*
-		document.getElementById('wagon_sub_menu').className = 'panel-collapse collapse hide';
-		document.getElementById('wagon-panel').style.display = 'none';
-		document.getElementById('shots-panel').style.display = '';
-   		document.getElementById('shots_sub_menu').className = 'panel-collapse collapse show';
-		document.getElementById('wagonData').value = '';*/
 		break;
 	case 'isDeclared':
 		processCricketProcedures('LOG_IS_DECLARED',null);
@@ -833,41 +725,8 @@ function processUserSelection(whichInput, extraData)
 		} else {
 			document.getElementById('overs_remaining_div').style.display = 'none';
 		}
-/*		switch($('#matchType option:selected').val()) {
-		case 'ODI': case 'OD':
-			document.getElementById('overs_remaining_select_overs').value = 50;
-			break;
-		case 'IT20': case 'DT20':
-			document.getElementById('overs_remaining_select_overs').value = 20;
-			break;
-		case 'D10':
-			document.getElementById('overs_remaining_select_overs').value = 10;
-			break;
-		case 'SUPER_OVER':
-			document.getElementById('overs_remaining_select_overs').value = 1;
-			break;
-		case 'TEST': case 'FC':
-			document.getElementById('overs_remaining_select_overs').value = 0;
-			break;
-		}*/
+		updatePlayerGenderOptions();
 		break;
-/*	case 'overs_remaining_select_day':
-		document.getElementById('overs_remaining_select_overs').selectedIndex = 89;
-		document.getElementById('new_ball_select_overs').value = '90.0';
-		match_data.setup.overRemainingNewBall.forEach(function(ovrRemNewBl,index,arr){
-			if($('#overs_remaining_select_day option:selected').val() == (index + 1)) {
-				document.getElementById('overs_remaining_select_overs').value = ovrRemNewBl.oversRemaining;
-				document.getElementById('new_ball_select_overs').value = ovrRemNewBl.newBallOver;
-			}
-		});			
-		break;*/
-/*	case 'save_overs_remaining_btn':
-		if(match_data == null || match_data.setup == null) {
-			alert('Logging of overs remaining & new ball is NOT allowed until the SETUP page is saved');
-			return false;
-		}
-		processCricketProcedures('LOG_OVERS_REMAINING',null);
-		break;*/
 	case 'log_day_session_btn':
 		if($('#select_day option:selected').val() > 0 && $('#select_session option:selected').val() > 0) {
 			processCricketProcedures('LOG_DAY_SESSION',null);
@@ -1251,7 +1110,7 @@ function processUserSelection(whichInput, extraData)
 						if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 							option = document.createElement('option');
 							option.value = bc.player.playerId;
-						    option.text = formatPlayerName(bc.player);
+						    option.text = bc.player.full_name;
 						    if(bc.status.toLowerCase() == 'out') {
 							    option.selected = true;
 						    }
@@ -1271,6 +1130,7 @@ function processUserSelection(whichInput, extraData)
 					if(inn.battingTeamId == match_data.setup.homeTeamId) {
 						if(match_data.setup.homeOtherSquad != null) {
 							match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
+                                if(!isPlayerEligibleForCurrentT20TestInning(hos, inn.inningNumber)) return;
 								option = document.createElement('option');
 								option.value = hos.playerId;
 							    option.text = hos.full_name;
@@ -1280,6 +1140,7 @@ function processUserSelection(whichInput, extraData)
 					} else if(inn.battingTeamId == match_data.setup.awayTeamId) {
 						if(match_data.setup.awayOtherSquad != null) {
 							match_data.setup.awayOtherSquad.forEach(function(aos,index,arr){
+                                if(!isPlayerEligibleForCurrentT20TestInning(aos, inn.inningNumber)) return;
 								option = document.createElement('option');
 								option.value = aos.playerId;
 							    option.text = aos.full_name;
@@ -1303,7 +1164,7 @@ function processUserSelection(whichInput, extraData)
 					inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -1326,7 +1187,7 @@ function processUserSelection(whichInput, extraData)
 						if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 							option = document.createElement('option');
 							option.value = bc.player.playerId;
-						    option.text = formatPlayerName(bc.player);
+						    option.text = bc.player.full_name;
 						    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 							    option.selected = true;
 						    }
@@ -1350,7 +1211,7 @@ function processUserSelection(whichInput, extraData)
 				    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 			    	    if(bc.status.toLowerCase() == 'currentbowler') {
 						    option.selected = true;
 					    }
@@ -2143,21 +2004,25 @@ function processCricketProcedures(whatToProcess, whichInput)
 	});
 }
 function switchT20GenderTab(team, gender) {
-    ['FEMALE', 'MALE'].forEach(function(g) {
+    ['GIRL', 'BOY'].forEach(function(g) {
         var panel = document.getElementById(team + '_' + g + '_panel');
         var button = document.getElementById(team + '_' + g + '_tab');
         if(panel) panel.style.display = g === gender ? '' : 'none';
         if(button) {
-            button.style.backgroundColor = g === gender ? (g === 'FEMALE' ? '#e83e8c' : '#0d6efd') : '#6c757d';
+            button.style.backgroundColor = g === gender ? (g === 'GIRL' ? '#e83e8c' : '#0d6efd') : '#6c757d';
             button.style.color = '#fff';
         }
     });
 }
-function formatPlayerName(player) {
-    if(match_data.setup.matchType === 'T20_TEST' && player.gender) {
-        return player.full_name + (player.gender.toUpperCase() === 'FEMALE' ? ' (F)' : player.gender.toUpperCase() === 'MALE' ? ' (M)' : '');
-    }
-    return player.full_name;
+function getT20TestGenderForInning(inningNumber) {
+    if(!match_data || !match_data.setup || match_data.setup.matchType !== 'T20_TEST' || !inningNumber) return null;
+    var firstGender = (match_data.setup.playerGender || '').trim().toUpperCase();
+    if(firstGender !== 'GIRL' && firstGender !== 'BOY') return null;
+    return Number(inningNumber) <= 2 ? firstGender : firstGender === 'GIRL' ? 'BOY' : 'GIRL';
+}
+function isPlayerEligibleForCurrentT20TestInning(player, inningNumber) {
+    var requiredGender = getT20TestGenderForInning(inningNumber);
+    return !requiredGender || (player.gender || '').trim().toUpperCase() === requiredGender;
 }
 function renderT20TestTeamSelection(data) {
     var container = document.getElementById('team_selection_div');
@@ -2192,8 +2057,8 @@ function renderT20TestTeamSelection(data) {
         var tabs = document.createElement('div');
         tabs.className = 'd-flex gap-2 mb-2';
 
-        ['FEMALE', 'MALE'].forEach(function(gender) {
-            var label = gender === 'FEMALE' ? 'Girls' : 'Boys';
+        ['GIRL', 'BOY'].forEach(function(gender) {
+            var label = gender === 'GIRL' ? 'Girls' : 'Boys';
             var button = document.createElement('button');
             button.type = 'button';
             button.id = team + '_' + gender + '_tab';
@@ -2205,8 +2070,8 @@ function renderT20TestTeamSelection(data) {
 
         teamContainer.appendChild(tabs);
 
-		['FEMALE', 'MALE'].forEach(function(gender) {
-		    var label = gender === 'FEMALE' ? 'Girls' : 'Boys';
+		['GIRL', 'BOY'].forEach(function(gender) {
+		    var label = gender === 'GIRL' ? 'Girls' : 'Boys';
 		    var panel = document.createElement('div');
             panel.id = team + '_' + gender + '_panel';
 
@@ -2286,7 +2151,7 @@ function renderT20TestTeamSelection(data) {
         });
 
         row.appendChild(teamContainer);
-        switchT20GenderTab(team, 'FEMALE');
+        switchT20GenderTab(team, 'GIRL');
     }
 
     var row = document.createElement('div');
@@ -2635,7 +2500,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -2656,7 +2521,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = formatPlayerName(bc.player);
+				    option.text = bc.player.full_name;
 		    	    if(bc.status.toLowerCase() == 'currentbowler' || bc.status.toLowerCase() == 'lastbowler') {
 					    option.selected = true;
 				    }
@@ -2954,7 +2819,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    inn.bowlingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = formatPlayerName(bc.player);
+				    option.text = bc.player.full_name;
 		    	    if(bc.status != null && bc.status.toLowerCase() == 'currentbowler') {
 					    option.selected = true;
 				    }
@@ -3142,7 +3007,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -3317,7 +3182,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = formatPlayerName(bc.player);
+				    option.text = bc.player.full_name;
 				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
@@ -3338,7 +3203,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				inn.battingCard.forEach(function(bc,bc_index,bc_arr){
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = formatPlayerName(bc.player);
+				    option.text = bc.player.full_name;
 				    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 					    option.selected = true;
 				    }
@@ -3424,7 +3289,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.batsmanInningStarted != null && bc.batsmanInningStarted.toLowerCase() == 'yes') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    if(bc.status.toLowerCase() == 'out') {
 						    option.selected = true;
 					    }
@@ -3523,6 +3388,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    select.appendChild(option);
 				if(inn.battingTeamId == match_data.setup.homeTeamId && match_data.setup.homeOtherSquad != null) {
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
+                        if(!isPlayerEligibleForCurrentT20TestInning(hos, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.full_name;
@@ -3530,6 +3396,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					});
 				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
+                        if(!isPlayerEligibleForCurrentT20TestInning(hos, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.full_name;
@@ -3557,6 +3424,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				}
 				if(inn.bowlingTeamId == match_data.setup.homeTeamId && match_data.setup.homeOtherSquad != null) {
 					match_data.setup.homeOtherSquad.forEach(function(field,index,arr){
+                        if(!isPlayerEligibleForCurrentT20TestInning(field, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = field.playerId;
 					    option.text = field.full_name + ' (SUB)';
@@ -3564,6 +3432,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					});
 				} else if(inn.bowlingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(field,index,arr){
+                        if(!isPlayerEligibleForCurrentT20TestInning(field, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = field.playerId;
 					    option.text = field.full_name + ' (SUB)';
@@ -3587,7 +3456,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					inn.bowlingCard.forEach(function(bc,index,arr){
 						option = document.createElement('option');
 						option.value = bc.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    select.appendChild(option);
 					});
 				}
@@ -4971,6 +4840,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				
 				if(inn.bowlingTeamId == match_data.setup.homeTeamId) {
 					match_data.setup.homeSquad.forEach(function(hs,bc_index,bc_arr){
+						if(!isPlayerEligibleForCurrentT20TestInning(hs, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hs.playerId;
 					    option.text = hs.full_name;
@@ -4981,6 +4851,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					});
 					if(match_data.setup.homeSubstitutes != null) {
 						match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(hs, inn.inningNumber)) return;
 							option = document.createElement('option');
 							option.value = hs.playerId;
 							option.text = hs.full_name;
@@ -4989,6 +4860,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 					if(match_data.setup.homeOtherSquad != null) {
 						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(hs, inn.inningNumber)) return;
 							option = document.createElement('option');
 							option.value = hs.playerId;
 							option.text = hs.full_name;
@@ -4997,6 +4869,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 				}else if(inn.bowlingTeamId == match_data.setup.awayTeamId) {
 					match_data.setup.awaySquad.forEach(function(as,as_index,bc_arr){
+						if(!isPlayerEligibleForCurrentT20TestInning(as, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = as.playerId;
 						option.text = as.full_name;
@@ -5007,6 +4880,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					});
 					if(match_data.setup.awaySubstitutes != null) {
 						match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(as, inn.inningNumber)) return;
 							option = document.createElement('option');
 							option.value = as.playerId;
 							option.text = as.full_name;
@@ -5015,6 +4889,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 					if(match_data.setup.awayOtherSquad != null) {
 						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(as, inn.inningNumber)) return;
 							option = document.createElement('option');
 							option.value = as.playerId;
 							option.text = as.full_name;
@@ -5022,6 +4897,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						});
 					}
 				}
+                if(match_data.setup.matchType === 'T20_TEST' && select.options.length > 0) select.selectedIndex = Math.min(10, select.options.length - 1);
 			    select.setAttribute('onchange','processUserSelection(this);');
 
 				header_text = document.createElement('label');
@@ -5257,7 +5133,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -5277,6 +5153,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    select.appendChild(option);
 				if(inn.battingTeamId == match_data.setup.homeTeamId && match_data.setup.homeOtherSquad != null) {
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
+					if(!isPlayerEligibleForCurrentT20TestInning(hos, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.full_name;
@@ -5284,6 +5161,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					});
 				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
+					if(!isPlayerEligibleForCurrentT20TestInning(hos, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.full_name;
@@ -5315,9 +5193,10 @@ function addItemsToList(whatToProcess, dataToProcess)
 					break;
 				}
 				match_data.match.inning[which_inn].battingCard.forEach(function(bc,bc_index,bc_arr){
+					if(!isPlayerEligibleForCurrentT20TestInning(bc.player, inn.inningNumber)) return;
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = formatPlayerName(bc.player);
+				    option.text = bc.player.full_name;
 					if(bc.player.captainWicketKeeper != null && bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						option.selected = true;
 					}
@@ -5325,6 +5204,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				});
 				if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.homeTeamId) {
 					match_data.setup.homeSquad.forEach(function(hs,bc_index,bc_arr){
+						if(!isPlayerEligibleForCurrentT20TestInning(hs, match_data.match.inning[which_inn].inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hs.playerId;
 					    option.text = hs.full_name;
@@ -5333,6 +5213,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(match_data.setup.homeSubstitutes != null) {
 						match_data.setup.homeSubstitutes.sort(
 							(a, b) => a.playerPosition - b.playerPosition).forEach(function(hs,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(hs, match_data.match.inning[which_inn].inningNumber)) return;
 							option = document.createElement('option');
 							option.value = hs.playerId;
 						    option.text = hs.full_name;
@@ -5341,6 +5222,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 					if(match_data.setup.homeOtherSquad != null) {
 						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(hs, match_data.match.inning[which_inn].inningNumber)) return;
 							option = document.createElement('option');
 							option.value = hs.playerId;
 						    option.text = hs.full_name;
@@ -5349,6 +5231,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 				}else if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.awayTeamId) {
 					match_data.setup.awaySquad.forEach(function(as,bc_index,bc_arr){
+						if(!isPlayerEligibleForCurrentT20TestInning(as, match_data.match.inning[which_inn].inningNumber)) return;
 						option = document.createElement('option');
 						option.value = as.playerId;
 					    option.text = as.full_name;
@@ -5357,6 +5240,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(match_data.setup.awaySubstitutes != null) {
 						match_data.setup.awaySubstitutes.sort(
 							(a, b) => a.playerPosition - b.playerPosition).forEach(function(as,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(as, match_data.match.inning[which_inn].inningNumber)) return;
 							option = document.createElement('option');
 							option.value = as.playerId;
 						    option.text = as.full_name;
@@ -5365,6 +5249,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 					if(match_data.setup.awayOtherSquad != null) {
 						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(as, match_data.match.inning[which_inn].inningNumber)) return;
 							option = document.createElement('option');
 							option.value = as.playerId;
 						    option.text = as.full_name;
@@ -5387,6 +5272,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				$('#' + select.id + ' > option').each(function() {
 					if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.homeTeamId) {
 						for(var plyr = 0; plyr <= match_data.setup.homeSquad.length -1; plyr++) {
+							if(!isPlayerEligibleForCurrentT20TestInning(match_data.setup.homeSquad[plyr], match_data.match.inning[which_inn].inningNumber)) return;
 							if(match_data.setup.homeSquad[plyr].captainWicketKeeper != null && match_data.setup.homeSquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
 								&& match_data.setup.homeSquad[plyr].playerId == this.value) {
 								this.selected = true;
@@ -5395,6 +5281,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						}
 					}else if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.awayTeamId) {
 						for(var plyr = 0; plyr <= match_data.setup.awaySquad.length -1; plyr++) {
+							if(!isPlayerEligibleForCurrentT20TestInning(match_data.setup.awaySquad[plyr], match_data.match.inning[which_inn].inningNumber)) return;
 							if(match_data.setup.awaySquad[plyr].captainWicketKeeper != null && match_data.setup.awaySquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
 								&& match_data.setup.awaySquad[plyr].playerId == this.value) {
 								this.selected = true;
@@ -5425,7 +5312,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -5596,6 +5483,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			if(inn.isCurrentInning.toLowerCase() == 'yes') {
 				if(inn.battingTeamId == match_data.setup.homeTeamId && match_data.setup.homeOtherSquad != null) {
 					match_data.setup.homeOtherSquad.forEach(function(hos,index,arr){
+					if(!isPlayerEligibleForCurrentT20TestInning(hos, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.full_name;
@@ -5603,6 +5491,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					});
 				} else if(inn.battingTeamId == match_data.setup.awayTeamId && match_data.setup.awayOtherSquad != null) {
 					match_data.setup.awayOtherSquad.forEach(function(hos,index,arr){
+					if(!isPlayerEligibleForCurrentT20TestInning(hos, inn.inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hos.playerId;
 					    option.text = hos.full_name;
@@ -5627,7 +5516,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -5657,9 +5546,10 @@ function addItemsToList(whatToProcess, dataToProcess)
 					break;
 				}
 				match_data.match.inning[which_inn].battingCard.forEach(function(bc,bc_index,bc_arr){
+					if(!isPlayerEligibleForCurrentT20TestInning(bc.player, inn.inningNumber)) return;
 					option = document.createElement('option');
 					option.value = bc.player.playerId;
-				    option.text = formatPlayerName(bc.player);
+				    option.text = bc.player.full_name;
 					if(bc.player.captainWicketKeeper != null && bc.player.captainWicketKeeper.toLowerCase().includes('wicket_keeper')) {
 						option.selected = true;
 					}
@@ -5667,6 +5557,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				});
 				if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.homeTeamId) {
 					match_data.setup.homeSquad.forEach(function(hs,bc_index,bc_arr){
+						if(!isPlayerEligibleForCurrentT20TestInning(hs, match_data.match.inning[which_inn].inningNumber)) return;
 						option = document.createElement('option');
 						option.value = hs.playerId;
 					    option.text = hs.full_name;
@@ -5674,6 +5565,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					});
 					if(match_data.setup.homeSubstitutes != null) {
 						match_data.setup.homeSubstitutes.forEach(function(hs,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(hs, match_data.match.inning[which_inn].inningNumber)) return;
 							option = document.createElement('option');
 							option.value = hs.playerId;
 						    option.text = hs.full_name;
@@ -5682,6 +5574,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 					if(match_data.setup.homeOtherSquad != null) {
 						match_data.setup.homeOtherSquad.forEach(function(hs,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(hs, match_data.match.inning[which_inn].inningNumber)) return;
 							option = document.createElement('option');
 							option.value = hs.playerId;
 						    option.text = hs.full_name;
@@ -5690,6 +5583,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 				}else if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.awayTeamId) {
 					match_data.setup.awaySquad.forEach(function(as,bc_index,bc_arr){
+						if(!isPlayerEligibleForCurrentT20TestInning(as, match_data.match.inning[which_inn].inningNumber)) return;
 						option = document.createElement('option');
 						option.value = as.playerId;
 					    option.text = as.full_name;
@@ -5697,6 +5591,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					});
 					if(match_data.setup.awaySubstitutes != null) {
 						match_data.setup.awaySubstitutes.forEach(function(as,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(as, match_data.match.inning[which_inn].inningNumber)) return;
 							option = document.createElement('option');
 							option.value = as.playerId;
 						    option.text = as.full_name;
@@ -5705,6 +5600,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					}
 					if(match_data.setup.awayOtherSquad != null) {
 						match_data.setup.awayOtherSquad.forEach(function(as,bc_index,bc_arr){
+							if(!isPlayerEligibleForCurrentT20TestInning(as, match_data.match.inning[which_inn].inningNumber)) return;
 							option = document.createElement('option');
 							option.value = as.playerId;
 						    option.text = as.full_name;
@@ -5727,6 +5623,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				$('#' + select.id + ' > option').each(function() {
 					if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.homeTeamId) {
 						for(var plyr = 0; plyr <= match_data.setup.homeSquad.length-1; plyr++) {
+							if(!isPlayerEligibleForCurrentT20TestInning(match_data.setup.homeSquad[plyr], match_data.match.inning[which_inn].inningNumber)) return;
 							if(match_data.setup.homeSquad[plyr].captainWicketKeeper != null && match_data.setup.homeSquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
 								&& match_data.setup.homeSquad[plyr].playerId == this.value) {
 								this.selected = true;
@@ -5735,6 +5632,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						}
 					}else if(match_data.match.inning[which_inn].battingTeamId == match_data.setup.awayTeamId) {
 						for(var plyr = 0; plyr <= match_data.setup.awaySquad.length-1; plyr++) {
+							if(!isPlayerEligibleForCurrentT20TestInning(match_data.setup.awaySquad[plyr], match_data.match.inning[which_inn].inningNumber)) return;
 							if(match_data.setup.awaySquad[plyr].captainWicketKeeper != null && match_data.setup.awaySquad[plyr].captainWicketKeeper.toLowerCase().includes('wicket_keeper')
 								&& match_data.setup.awaySquad[plyr].playerId == this.value) {
 								this.selected = true;
@@ -5765,7 +5663,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 					if(bc.status.toLowerCase() == 'not out') {
 						option = document.createElement('option');
 						option.value = bc.player.playerId;
-					    option.text = formatPlayerName(bc.player);
+					    option.text = bc.player.full_name;
 					    if(bc.onStrike != null && bc.onStrike.toLowerCase() == 'yes') {
 						    option.selected = true;
 					    }
@@ -6218,12 +6116,15 @@ function addItemsToList(whatToProcess, dataToProcess)
 							});
 							
 							batters_plyrs = batters_plyrs.filter((p, index, self) => index === self.findIndex(t => t.playerId === p.playerId));
-								
+							
+							var currentInning = dataToProcess.match.inning.find(function(inn) { return inn.isCurrentInning.toLowerCase() === 'yes'; });
+                            if(currentInning) batters_plyrs = batters_plyrs.filter(function(player) { return isPlayerEligibleForCurrentT20TestInning(player, currentInning.inningNumber); });
+														
 							batters_plyrs.forEach(function(bt,index_cp,arr_cp) {
 						    	anchor = document.createElement('a');
 						    	anchor.className = 'dropdown-item cricket-item';
 							    anchor.id = option.id + ',' + bt.playerId;
-							    anchor.innerText = formatPlayerName(bt);
+							    anchor.innerText = bt.full_name;
 							    anchor.setAttribute('onclick','processCricketProcedures("LOG_EVENT",this);');
 							    anchor.style = 'display:block;';
 							    linkDiv.append(anchor);
@@ -6273,7 +6174,9 @@ function addItemsToList(whatToProcess, dataToProcess)
 			
 					// Batting card
 					header_text = document.createElement('header_text');
-					header_text.innerHTML = inns_item.batting_team.teamName4 + ' Scorecard';
+					var gender = match_data.setup.matchType === 'T20_TEST' ? getT20TestGenderForInning(inns_item.inningNumber) : null;
+					var genderSuffix = gender ? ' <strong>' + (gender === 'GIRL' ? 'Girls XI' : 'Boys XI') + '</strong>' : '';
+					header_text.innerHTML = inns_item.batting_team.teamName4 + ' Scorecard' + genderSuffix;
 					header_text.style.fontSize = "12px";
 
 					table = document.createElement('table');
@@ -6477,7 +6380,9 @@ function addItemsToList(whatToProcess, dataToProcess)
 									
 					// Bowling card
 					header_text = document.createElement('header_text');
-					header_text.innerHTML = inns_item.bowling_team.teamName4 + ' Bowling Card';
+					var gender = match_data.setup.matchType === 'T20_TEST' ? getT20TestGenderForInning(inns_item.inningNumber) : null;
+					var genderSuffix = gender ? ' <strong>' + (gender === 'GIRL' ? 'Girls XI' : 'Boys XI') + '</strong>' : '';
+					header_text.innerHTML = inns_item.bowling_team.teamName4 + ' Bowling Card' + genderSuffix;
 					header_text.style.fontSize = "12px";
 
 					table = document.createElement('table');

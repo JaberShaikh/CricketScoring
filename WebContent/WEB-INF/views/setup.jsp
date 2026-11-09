@@ -201,13 +201,15 @@
                                     <option value="yes">Yes</option>
                                  </select>
                               </div>
-                              <!-- <label for="readPhotoColumn" class="form-label me-2 mb-0" style="white-space:nowrap;">Photo </label> <div class="col-sm-1 col-md-1"> <select id="readPhotoColumn" name="readPhotoColumn" class="form-select form-select-sm"> <option value="yes">Yes</option> <option value="no">No</option> </select> </div> --> <label for="playerGender" class="form-label me-2 mb-0" style="white-space:nowrap;">Gender </label> 
-                              <div class="col-sm-1 col-md-1">
-                                 <select id="playerGender" name="playerGender" class="form-select form-select-sm" style="width:70px;">
-                                    <option value="men">Men</option>
-                                    <option value="women">Women</option>
-                                 </select>
-                              </div>
+							<div class="form-group d-flex align-items-center gap-2 flex-shrink-0">
+							    <label for="playerGender" id="playerGenderLabel" class="form-label mb-0" style="white-space:nowrap;">Gender</label>
+							    <select id="playerGender" name="playerGender" class="form-select form-select-sm" style="width:110px; flex-shrink:0;">
+							        <option value="men">Men</option>
+							        <option value="women">Women</option>
+							        <option value="GIRL">GIRL</option>
+							        <option value="BOY">BOY</option>
+							    </select>
+							</div>
                               <label for="reviewsPerTeam" class="form-label me-2 mb-0" style="white-space:nowrap;">Reviews</label> 
                               <div class="col-sm-1 col-md-1">
                                  <select id="reviewsPerTeam" name="reviewsPerTeam" class="form-select form-select-sm" style="width:70px;">
