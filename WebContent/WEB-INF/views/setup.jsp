@@ -204,6 +204,7 @@
 							<div class="form-group d-flex align-items-center gap-2 flex-shrink-0">
 							    <label for="playerGender" id="playerGenderLabel" class="form-label mb-0" style="white-space:nowrap;">Gender</label>
 							    <select id="playerGender" name="playerGender" class="form-select form-select-sm" style="width:110px; flex-shrink:0;">
+							        <option value=""></option>
 							        <option value="men">Men</option>
 							        <option value="women">Women</option>
 							        <option value="GIRL">GIRL</option>
