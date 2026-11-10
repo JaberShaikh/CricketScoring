@@ -2024,32 +2024,96 @@ function isPlayerEligibleForCurrentT20TestInning(player, inningNumber) {
     var requiredGender = getT20TestGenderForInning(inningNumber);
     return !requiredGender || (player.gender || '').trim().toUpperCase() === requiredGender;
 }
+
 function renderT20TestTeamSelection(data) {
     var container = document.getElementById('team_selection_div');
     container.innerHTML = '';
 
     function getPlayers(setup, team, gender) {
         var players = [];
-        var collections = [
-            setup[team + 'Squad'],
-            setup[team + 'Substitutes'],
-            setup[team + 'OtherSquad']
-        ];
-        collections.forEach(function(collection) {
+        [setup[team + 'Squad'], setup[team + 'Substitutes'], setup[team + 'OtherSquad']].forEach(function(collection) {
             if(collection) {
                 collection.forEach(function(player) {
-                    if(player.gender && player.gender.trim().toUpperCase() === gender && !players.some(function(p) { return p.playerId === player.playerId; })) {
-                        players.push(player);
-                    }
+                    if((player.gender || '').trim().toUpperCase() === gender && !players.some(function(p) { return String(p.playerId) === String(player.playerId); })) players.push(player);
                 });
             }
         });
         return players;
     }
 
+    function createSelectionTable(team, gender, players, startSlot, slotCount, isActive, substituteCount) {
+        var label = gender === 'GIRL' ? 'Girls' : 'Boys';
+        var table = document.createElement('table');
+        table.className = 'table table-bordered table-sm mb-3';
+        var thead = document.createElement('thead');
+        thead.innerHTML = isActive ? '<tr><th>Pos</th><th>' + label + ' Player</th><th>Captain / Keeper</th></tr>' : '<tr><th>Pos</th><th>' + label + ' Substitute</th></tr>';
+        table.appendChild(thead);
+        var tbody = document.createElement('tbody');
+
+        for(var i = 0; i < slotCount; i++) {
+            var slot = startSlot + i;
+            var row = tbody.insertRow();
+            row.insertCell().textContent = isActive ? slot : 'Sub ' + (i + 1);
+
+            var playerCell = row.insertCell();
+            var select = document.createElement('select');
+            select.id = team + (gender === 'GIRL' ? 'Girls' : 'Boys') + 'Player_' + slot;
+            select.name = select.id;
+            select.className = 'form-select form-select-sm ' + (team === 'home' ? 'selectHomePlayers' : 'selectAwayPlayers');
+            select.style.width = '100%';
+
+            var placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.text = 'Select player';
+            select.appendChild(placeholder);
+
+            players.forEach(function(player) {
+                var option = document.createElement('option');
+                option.value = player.playerId;
+                option.text = player.full_name;
+                select.appendChild(option);
+            });
+
+            if(players.length >= slot) select.selectedIndex = slot;
+            playerCell.appendChild(select);
+
+            if(isActive) {
+                var roleCell = row.insertCell();
+                var role = document.createElement('select');
+                role.id = team + (gender === 'GIRL' ? 'Girls' : 'Boys') + 'CaptainWicketKeeper_' + slot;
+                role.name = role.id;
+                role.className = 'form-select form-select-sm';
+
+                ['', 'captain', 'wicket_keeper', 'captain_wicket_keeper'].forEach(function(value) {
+                    var option = document.createElement('option');
+                    option.value = value;
+                    option.text = value === '' ? '' : value === 'captain' ? 'Captain' : value === 'wicket_keeper' ? 'Wicket Keeper' : 'Captain And Wicket Keeper';
+                    role.appendChild(option);
+                });
+
+                (function(playerSelect, roleSelect, playerList) {
+                    function restoreRole() {
+                        var selectedPlayer = playerList.find(function(player) {
+                            return String(player.playerId) === playerSelect.value;
+                        });
+                        roleSelect.value = selectedPlayer ? selectedPlayer.captainWicketKeeper || '' : '';
+                    }
+                    playerSelect.addEventListener('change', restoreRole);
+                    restoreRole();
+                })(select, role, players);
+
+                roleCell.appendChild(role);
+            }
+        }
+
+        table.appendChild(tbody);
+        return table;
+    }
+
     function createTeam(team, teamName, setup) {
         var teamContainer = document.createElement('div');
         teamContainer.className = 'col-md-6 mb-3';
+
         var heading = document.createElement('h5');
         heading.textContent = teamName;
         teamContainer.appendChild(heading);
@@ -2058,95 +2122,50 @@ function renderT20TestTeamSelection(data) {
         tabs.className = 'd-flex gap-2 mb-2';
 
         ['GIRL', 'BOY'].forEach(function(gender) {
-            var label = gender === 'GIRL' ? 'Girls' : 'Boys';
             var button = document.createElement('button');
             button.type = 'button';
             button.id = team + '_' + gender + '_tab';
             button.className = 'btn btn-sm';
-            button.textContent = label;
+            button.textContent = gender === 'GIRL' ? 'Girls' : 'Boys';
             button.onclick = function() { switchT20GenderTab(team, gender); };
             tabs.appendChild(button);
         });
 
         teamContainer.appendChild(tabs);
 
-		['GIRL', 'BOY'].forEach(function(gender) {
-		    var label = gender === 'GIRL' ? 'Girls' : 'Boys';
-		    var panel = document.createElement('div');
+        ['GIRL', 'BOY'].forEach(function(gender) {
+            var label = gender === 'GIRL' ? 'Girls' : 'Boys';
+            var panel = document.createElement('div');
             panel.id = team + '_' + gender + '_panel';
 
             var players = getPlayers(setup, team, gender);
-            var substituteCount = parseInt($('#' + team + 'SubstitutesNumber').val()) || 0;
-            var totalSlots = 11 + substituteCount;
+            var substituteCount = parseInt($('#' + team + 'SubstitutesNumber').val(), 10) || 0;
 
-            if(players.length < totalSlots) {
+            var activeHeading = document.createElement('h6');
+            activeHeading.textContent = label + ' Active XI';
+            panel.appendChild(activeHeading);
+            panel.appendChild(createSelectionTable(team, gender, players, 1, 11, true, substituteCount));
+
+            var substituteHeading = document.createElement('h6');
+            substituteHeading.textContent = label + ' Substitutes';
+            panel.appendChild(substituteHeading);
+
+            if(substituteCount > 0) {
+                panel.appendChild(createSelectionTable(team, gender, players, 12, substituteCount, false, substituteCount));
+            } else {
                 var note = document.createElement('div');
-                note.className = 'alert alert-info';
-                note.textContent = 'Available ' + label + ' players: ' + players.length;
+                note.className = 'text-muted mb-3';
+                note.textContent = 'No substitutes selected.';
                 panel.appendChild(note);
             }
 
-            var table = document.createElement('table');
-            table.className = 'table table-bordered table-sm';
-            var thead = document.createElement('thead');
-            thead.innerHTML = '<tr><th>Pos</th><th>' + label + ' Player</th><th>Captain / Keeper</th></tr>';
-            table.appendChild(thead);
-
-            var tbody = document.createElement('tbody');
-
-            for(var i = 1; i <= totalSlots; i++) {
-                var row = tbody.insertRow();
-                row.insertCell().textContent = i <= 11 ? i : 'Sub ' + (i - 11);
-
-                var playerCell = row.insertCell();
-                var select = document.createElement('select');
-                select.id = team + label + 'Player_' + i;
-                select.name = select.id;
-                select.className = 'form-select form-select-sm ' + (team === 'home' ? 'selectHomePlayers' : 'selectAwayPlayers');
-                select.style.width = '100%';
-
-                players.forEach(function(player) {
-                    var option = document.createElement('option');
-                    option.value = player.playerId;
-                    option.text = player.full_name;
-                    select.appendChild(option);
-                });
-
-                if(players.length > 0) {
-                    select.selectedIndex = Math.min(i - 1, players.length - 1);
-                }
-
-                playerCell.appendChild(select);
-
-                var roleCell = row.insertCell();
-                if(i <= 11) {
-                    var role = document.createElement('select');
-                    role.id = team + label + 'CaptainWicketKeeper_' + i;
-                    role.name = role.id;
-                    role.className = 'form-select form-select-sm';
-                    ['', 'captain', 'wicket_keeper', 'captain_wicket_keeper'].forEach(function(value) {
-                        var option = document.createElement('option');
-                        option.value = value;
-                        option.text = value === '' ? '' : value === 'captain' ? 'Captain' : value === 'wicket_keeper' ? 'Wicket Keeper' : 'Captain And Wicket Keeper';
-                        role.appendChild(option);
-                    });
-					(function(playerSelect, roleSelect, playerList) {
-					    function restoreRole() {
-					        var selectedPlayer = playerList.find(function(player) {
-					            return String(player.playerId) === playerSelect.value;
-					        });
-					        roleSelect.value = selectedPlayer ? selectedPlayer.captainWicketKeeper || '' : '';
-					    }
-					    playerSelect.addEventListener('change', restoreRole);
-					    restoreRole();
-					})(select, role, players);
-
-					roleCell.appendChild(role);
-                }
+            if(players.length < 11 + substituteCount) {
+                var warning = document.createElement('div');
+                warning.className = 'alert alert-info';
+                warning.textContent = 'Available ' + label + ' players: ' + players.length + '. Required: ' + (11 + substituteCount);
+                panel.appendChild(warning);
             }
 
-            table.appendChild(tbody);
-            panel.appendChild(table);
             teamContainer.appendChild(panel);
         });
 
